@@ -168,6 +168,7 @@
   <script>
     const wrapper = document.getElementById("splitWrapper");
     const root = document.documentElement;
+    const middleImage = document.querySelector(".middle-blend");
     let targetSplit = 50;
     let currentSplit = 50;
     let animationFrame = null;
@@ -182,12 +183,14 @@
     const updateSplit = () => {
       currentSplit += (targetSplit - currentSplit) * 0.12;
       root.style.setProperty("--split", currentSplit.toFixed(2));
+      middleImage.style.left = `${currentSplit.toFixed(2)}%`;
 
       if (Math.abs(targetSplit - currentSplit) > 0.1) {
         animationFrame = requestAnimationFrame(updateSplit);
       } else {
         currentSplit = targetSplit;
         root.style.setProperty("--split", currentSplit.toFixed(2));
+        middleImage.style.left = `${currentSplit.toFixed(2)}%`;
         animationFrame = null;
       }
     };
