@@ -28,7 +28,7 @@
       background: #000;
     }
 
-    .split-wrapper {
+    .container {
       position: relative;
       height: 100vh;
       width: 100vw;
@@ -60,28 +60,29 @@
       pointer-events: none;
     }
 
-    .split-wrapper.hover-left .split.left {
+    .container.hover-left .split.left {
       flex-basis: 75%;
     }
 
-    .split-wrapper.hover-left .split.right {
+    .container.hover-left .split.right {
       flex-basis: 25%;
     }
 
-    .split-wrapper.hover-right .split.left {
+    .container.hover-right .split.left {
       flex-basis: 25%;
     }
 
-    .split-wrapper.hover-right .split.right {
+    .container.hover-right .split.right {
       flex-basis: 75%;
     }
 
-    .middle-blend {
+    .middle-seam {
       position: absolute;
       top: 0;
+      bottom: 0;
       left: 50%;
       transform: translateX(-50%);
-      height: 100vh;
+      height: 100%;
       width: auto;
       max-width: 200px;
       min-width: 80px;
@@ -90,15 +91,15 @@
       transition: left 1000ms ease-in-out;
     }
 
-    .split-wrapper.hover-left .middle-blend {
+    .container.hover-left .middle-seam {
       left: 75%;
     }
 
-    .split-wrapper.hover-right .middle-blend {
+    .container.hover-right .middle-seam {
       left: 25%;
     }
 
-    .center-overlay {
+    .center-content {
       position: absolute;
       top: 50%;
       left: 50%;
@@ -112,7 +113,7 @@
       padding: 20px;
     }
 
-    .center-overlay img {
+    .center-content img {
       width: min(70vw, 520px);
       height: auto;
       display: block;
@@ -149,7 +150,7 @@
     }
 
     @media (max-width: 768px) {
-      .center-overlay img {
+      .center-content img {
         width: min(80vw, 360px);
       }
 
@@ -158,14 +159,14 @@
         padding: 12px 36px;
       }
 
-      .middle-blend {
+      .middle-seam {
         max-width: 120px;
       }
     }
   </style>
 </head>
 <body>
-  <main class="split-wrapper" id="splitWrapper">
+  <main class="container" id="splitWrapper">
     <section class="split left" id="leftSplit">
       <video src="videos/left.mov" autoplay muted loop playsinline></video>
     </section>
@@ -173,9 +174,9 @@
       <video src="videos/right.mov" autoplay muted loop playsinline></video>
     </section>
 
-    <img class="middle-blend" src="images/middle.png" alt="Divider blend" />
+    <img class="middle-seam" src="images/middle.png" alt="Divider blend" />
 
-    <div class="center-overlay">
+    <div class="center-content">
       <img src="images/title.png" alt="Main title" />
       <a class="cta-button" href="main.html">START</a>
     </div>
