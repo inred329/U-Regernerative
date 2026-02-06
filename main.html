@@ -10,7 +10,7 @@
             padding: 0;
             width: 100%;
             height: 100%;
-            overflow: hidden; /* 禁止預設捲軸，改用 JS 控制 */
+            overflow: hidden;
             background-color: #000;
         }
 
@@ -21,64 +21,56 @@
             overflow: hidden;
         }
 
-        /* 背景層 */
+        /* === 修正後的背景層 === */
         #background {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
+            
+            /* 🔴 關鍵修改：讓背景比螢幕寬，這樣才有空間可以「捲動」 */
+            width: 160vw; /* 設為螢幕寬度的 1.6 倍，您可以根據圖片寬度調整這個數值 */
             height: 100%;
-            background-image: url('images/green1.png'); /* 預設陸地 */
-            background-size: cover;
-            background-position: center;
+            
+            background-image: url('images/green1.png');
+            
+            /* 🔴 關鍵修改：確保圖片高度填滿，寬度自動延伸，不會被裁切 */
+            background-size: cover; 
+            background-position: left center; /* 從左邊開始對齊 */
             background-repeat: no-repeat;
+            
             z-index: 1;
-            /* 簡單的視差位移 */
             will-change: transform; 
         }
 
-        /* 主角層 */
         #character {
             position: absolute;
-            bottom: 10%; /* 距離底部的位置 */
+            bottom: 10%;
             left: 0;
             z-index: 10;
-            
-            /* 預設尺寸 (陸地) */
             width: 109.6px;
             height: 180px;
-
             background-repeat: no-repeat;
             background-size: contain;
             background-position: center bottom;
-            
-            /* 平滑過渡尺寸變化 */
             transition: width 0.1s, height 0.1s;
         }
 
-        /* 轉場波浪層 (核彈級修正版) */
         #transition-wave {
             position: fixed;
             left: 0;
             width: 100%;
             z-index: 999;
             pointer-events: none;
-
-            /* 關鍵設定：高度 400%，起始位置在螢幕下方 */
             height: 400%;
             top: 100%;
-            
             background-image: url('images/wave.png');
             background-size: cover;
             background-position: top center;
-
-            /* 動畫過渡設定 */
             transition: top 1.5s ease-in-out;
         }
 
-        /* 當波浪升起時的 Class */
         #transition-wave.active {
-            top: -300%; /* 把波浪往上拉，直到蓋住螢幕 */
+            top: -300%;
         }
 
     </style>
@@ -92,174 +84,131 @@
 </div>
 
 <script>
-    // ==========================================
-    // 1. 設定檔 (CONFIG)
-    // ==========================================
     const CONFIG = {
         land: {
             bg: 'images/green1.png',
-            dims: { w: '109.6px', h: '180px' }, // 精準尺寸
-            frames: 6, // Walk_man1 ~ 6
-            pathPrefix: 'svgs/Walk_man_',
-            ext: '.svg' // 如果是 svg 請改成 .svg
+            dims: { w: '109.6px', h: '180px' },
+            frames: 6,
+            pathPrefix: 'svgs/Walk_man',
+            ext: '.png'
         },
         water: {
             bg: 'images/blue1.png',
-            dims: { w: '225.2px', h: '181.3px' }, // 精準尺寸
-            frames: 7, // Swim_man1 ~ 7
-            pathPrefix: 'svgs/Swim_man_',
-            ext: '.svg'
+            dims: { w: '225.2px', h: '181.3px' },
+            frames: 7,
+            pathPrefix: 'svgs/Swim_man',
+            ext: '.png'
         }
     };
 
-    // ==========================================
-    // 2. 狀態管理 (State)
-    // ==========================================
     const state = {
-        isWater: false,      // 目前是否在水下
-        isLocked: false,     // 是否正在轉場 (鎖定操作)
-        charX: 50,           // 主角位置 (預設給一點空間)
-        bgX: 0,              // 背景位置
-        frameIndex: 1,       // 目前動畫幀
-        direction: 1         // 1: 向右, -1: 向左
+        isWater: false,
+        isLocked: false,
+        charX: 50,
+        bgX: 0,
+        frameIndex: 1,
+        direction: 1
     };
 
-    // DOM 元素
     const el = {
         char: document.getElementById('character'),
         bg: document.getElementById('background'),
         wave: document.getElementById('transition-wave')
     };
 
-    // ==========================================
-    // 3. 初始化 (Init)
-    // ==========================================
     function init() {
-        // 設定初始外觀 (陸地)
         updateCharacterAppearance();
         render();
     }
 
-    // ==========================================
-    // 4. 核心邏輯 (Logic)
-    // ==========================================
-    
-    // 監聽滑鼠滾輪
     window.addEventListener('wheel', (e) => {
-        if (state.isLocked) return; // 轉場中禁止移動
+        if (state.isLocked) return;
 
-        // 判斷滾動方向 (向右走 或 向左走)
         const moveDirection = e.deltaY > 0 ? 1 : -1;
-        const speed = 8; // 移動速度
+        const speed = 8; 
 
         state.direction = moveDirection;
 
-        // 計算新位置
         if (moveDirection === 1) {
             // 向右走
             state.charX += speed;
-            state.bgX -= speed * 0.2; // 背景視差 (移動較慢)
             
-            // 檢查：是否到達陸地終點 (觸發下水)
+            // 🔴 背景視差邏輯：
+            // 當人往右走，背景要往左移 (負值)
+            // 係數 0.3 代表背景移動速度是人的 30%
+            state.bgX -= speed * 0.3; 
+            
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
             }
         } else {
             // 向左走
             state.charX -= speed;
-            state.bgX += speed * 0.2;
+            state.bgX += speed * 0.3;
 
-            // 檢查：是否到達海洋起點 (觸發上岸)
-            // 稍微留一點緩衝區 (-50) 避免誤觸
             if (state.isWater && state.charX < -50) { 
                 triggerTransition('toLand');
             }
         }
 
-        // 更新動畫幀 (走路/游泳)
-        // 每次滾動增加一點點 frameIndex
         state.frameIndex += 0.25; 
-
         render();
     });
 
-    // 渲染畫面
     function render() {
-        // 1. 設定主角位置與面向
-        // scaleX(1) = 面向右, scaleX(-1) = 面向左
         const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
         el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
-
-        // 2. 設定背景位置
         el.bg.style.transform = `translateX(${state.bgX}px)`;
 
-        // 3. 設定主角圖片 (動畫)
         const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
-        // 算式：(frameIndex 取整數) 除以 總幀數 取餘數 + 1 => 循環 1~6 或 1~7
         const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
         
-        // 組合路徑: svgs/Walk_man + 1 + .png
+        // 注意：這裡假設您的檔名是 Walk_man1.png (沒有下底線)
+        // 如果您的檔名是 Walk_man_1.png，請修改 CONFIG 中的 pathPrefix
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
     }
 
-    // 更新主角尺寸與背景 (不含動畫，僅設定數值)
     function updateCharacterAppearance() {
         const conf = state.isWater ? CONFIG.water : CONFIG.land;
-        
-        // 設定精準尺寸
         el.char.style.width = conf.dims.w;
         el.char.style.height = conf.dims.h;
-        
-        // 設定背景圖
         el.bg.style.backgroundImage = `url('${conf.bg}')`;
-        
-        // 重設動畫幀
         state.frameIndex = 1;
     }
 
-    // ==========================================
-    // 5. 轉場特效 (Transition)
-    // ==========================================
     function triggerTransition(type) {
         if (state.isLocked) return;
-        state.isLocked = true; // 鎖定輸入
+        state.isLocked = true;
         console.log(`開始轉場: ${type}`);
 
-        // 1. 波浪升起 (CSS動畫)
         el.wave.classList.add('active');
 
-        // 2. 等待波浪蓋住螢幕 (約 1200ms 後執行交換)
-        // 這裡的時間要配合 CSS 的 transition: top 1.5s，抓大概 3/4 的時間點
         setTimeout(() => {
-            
-            // === 執行「偷天換日」 ===
             if (type === 'toWater') {
                 state.isWater = true;
-                state.charX = 0; // 傳送到左邊
-                state.bgX = 0;   // 重置背景
+                state.charX = 0; 
+                state.bgX = 0;   // 重置背景位置
             } else {
                 state.isWater = false;
-                state.charX = window.innerWidth - 150; // 傳送到右邊
-                // 這裡不一定要重置 bgX，看需求，通常重置比較不會亂
+                state.charX = window.innerWidth - 150; 
+                
+                // 🔴 回到陸地時，背景也要設回「最右邊」的狀態
+                // 這樣才會有「走回來」的感覺
+                // 假設背景寬度偏移量大概是 -300px (視差累積)
+                state.bgX = -300; 
             }
 
-            // 更新尺寸與圖片
             updateCharacterAppearance();
-            
-            // 強制重新渲染一次位置 (避免閃爍)
             render();
 
         }, 1200);
 
-        // 3. 波浪落下 & 解鎖
-        // 總共等待 2500ms (波浪升起 1.5s + 停留 + 落下)
         setTimeout(() => {
             el.wave.classList.remove('active');
             state.isLocked = false;
         }, 2500);
     }
 
-    // 啟動!
     init();
 
 </script>
