@@ -58,11 +58,11 @@
       background-size: cover;
       background-repeat: no-repeat;
       z-index: 4;
-      transition: top 0.9s ease-in-out;
+      transition: top 1s ease-in-out;
       pointer-events: none;
     }
 
-    #transition-wave.is-active {
+    #transition-wave.active {
       top: -300%;
     }
   </style>
@@ -75,120 +75,120 @@
   </div>
 
   <script>
-    const background = document.getElementById('background');
-    const character = document.getElementById('character');
-    const wave = document.getElementById('transition-wave');
+    // CONFIG
+    const CONFIG = {
+      land: {
+        bg: 'images/green1.png',
+        dims: { w: '109.6px', h: '180px' },
+        frames: 6,
+        prefix: 'svgs/Walk_man_'
+      },
+      water: {
+        bg: 'images/blue1.png',
+        dims: { w: '225.2px', h: '181.3px' },
+        frames: 7,
+        prefix: 'svgs/Swim_man_'
+      }
+    };
 
-    const walkSprites = Array.from({ length: 6 }, (_, i) => `svgs/Walk_man_${i + 1}.svg`);
-    const swimSprites = Array.from({ length: 7 }, (_, i) => `svgs/Swim_man_${i + 1}.svg`);
+    // STATE
+    let state = {
+      isWater: false,
+      isLocked: false,
+      charX: 0,
+      bgX: 0,
+      frameIndex: 1
+    };
 
-    let isWaterLevel = false;
-    let isTransitioning = false;
-    let currentFrame = 0;
-    let charX = 0;
-    let bgX = 0;
-    let lastStep = 0;
+    // ELEMENTS
+    const els = {
+      char: document.getElementById('character'),
+      bg: document.getElementById('background'),
+      wave: document.getElementById('transition-wave')
+    };
 
-    const stepDistance = 60;
-    const parallaxFactor = 0.35;
-
-    function updateSprite(frames) {
-      character.style.backgroundImage = `url('${frames[currentFrame]}')`;
+    // INIT
+    function init() {
+      Object.assign(els.char.style, {
+        width: CONFIG.land.dims.w,
+        height: CONFIG.land.dims.h,
+        backgroundImage: `url('${CONFIG.land.prefix}1.svg')`
+      });
     }
 
-    function updateCharacterPosition() {
-      character.style.transform = `translateX(${charX}px)`;
+    // RENDER
+    function render() {
+      els.char.style.transform = `translateX(${state.charX}px)`;
+      els.bg.style.transform = `translateX(${state.bgX}px)`;
     }
 
-    function updateBackgroundPosition() {
-      background.style.transform = `translateX(${bgX}px)`;
-    }
+    // SCROLL HANDLER
+    window.addEventListener('wheel', (e) => {
+      if (state.isLocked) return;
 
-    function clampChar() {
-      const maxX = window.innerWidth - character.offsetWidth;
-      charX = Math.min(Math.max(charX, -character.offsetWidth), maxX + character.offsetWidth);
-    }
+      const speed = 5;
+      const direction = e.deltaY > 0 ? 1 : -1;
 
-    function handleScroll(delta) {
-      if (isTransitioning) return;
+      state.frameIndex += 0.2;
 
-      charX += delta;
-      bgX -= delta * parallaxFactor;
+      if (direction > 0) {
+        state.charX += speed;
+        state.bgX -= speed * 0.5;
+        els.char.style.transform = `scaleX(1) translateX(${state.charX}px)`;
 
-      clampChar();
+        if (!state.isWater && state.charX > window.innerWidth) {
+          triggerTransition('toWater');
+        }
+      } else {
+        state.charX -= speed;
+        state.bgX += speed * 0.5;
+        els.char.style.transform = `scaleX(-1) translateX(${Math.abs(state.charX)}px)`;
 
-      const distance = Math.abs(charX - lastStep);
-      if (distance >= stepDistance) {
-        const frames = isWaterLevel ? swimSprites : walkSprites;
-        currentFrame = (currentFrame + 1) % frames.length;
-        updateSprite(frames);
-        lastStep = charX;
+        if (state.isWater && state.charX < -50) {
+          triggerTransition('toLand');
+        }
       }
 
-      updateCharacterPosition();
-      updateBackgroundPosition();
+      const currentConfig = state.isWater ? CONFIG.water : CONFIG.land;
+      const frame = Math.floor(state.frameIndex) % currentConfig.frames + 1;
+      const extension = state.isWater ? 'png' : 'svg';
+      els.char.style.backgroundImage = `url('${currentConfig.prefix}${frame}.${extension}')`;
 
-      if (!isWaterLevel && charX > window.innerWidth) {
-        handleTransition(true);
-      }
+      render();
+    }, { passive: true });
 
-      if (isWaterLevel && charX < 0) {
-        handleTransition(false);
-      }
-    }
+    // TRANSITION HANDLER
+    function triggerTransition(type) {
+      if (state.isLocked) return;
+      state.isLocked = true;
 
-    function handleTransition(goToWater) {
-      if (isTransitioning) return;
-      isTransitioning = true;
-      wave.classList.add('is-active');
+      els.wave.classList.add('active');
 
       setTimeout(() => {
-        if (goToWater) {
-          isWaterLevel = true;
-          background.style.backgroundImage = "url('images/blue1.png')";
-          character.style.width = '225.2px';
-          character.style.height = '181.3px';
-          charX = 0;
-          currentFrame = 0;
-          updateSprite(swimSprites);
+        if (type === 'toWater') {
+          state.isWater = true;
+          state.charX = 0;
+          state.bgX = 0;
+          els.char.style.width = CONFIG.water.dims.w;
+          els.char.style.height = CONFIG.water.dims.h;
+          els.bg.style.backgroundImage = `url('${CONFIG.water.bg}')`;
         } else {
-          isWaterLevel = false;
-          background.style.backgroundImage = "url('images/green1.png')";
-          character.style.width = '109.6px';
-          character.style.height = '180px';
-          charX = window.innerWidth - 150;
-          currentFrame = 0;
-          updateSprite(walkSprites);
+          state.isWater = false;
+          state.charX = window.innerWidth - 150;
+          els.char.style.width = CONFIG.land.dims.w;
+          els.char.style.height = CONFIG.land.dims.h;
+          els.bg.style.backgroundImage = `url('${CONFIG.land.bg}')`;
         }
 
-        updateCharacterPosition();
-      }, 500);
+        state.frameIndex = 1;
+        render();
+      }, 1000);
 
       setTimeout(() => {
-        wave.classList.remove('is-active');
-      }, 900);
-
-      setTimeout(() => {
-        isTransitioning = false;
-      }, 1600);
+        els.wave.classList.remove('active');
+        state.isLocked = false;
+      }, 2000);
     }
-
-    function init() {
-      updateSprite(walkSprites);
-      updateCharacterPosition();
-      updateBackgroundPosition();
-    }
-
-    window.addEventListener('wheel', (event) => {
-      event.preventDefault();
-      const delta = event.deltaY > 0 ? 40 : -40;
-      handleScroll(delta);
-    }, { passive: false });
-
-    window.addEventListener('resize', () => {
-      clampChar();
-      updateCharacterPosition();
-    });
 
     init();
   </script>
