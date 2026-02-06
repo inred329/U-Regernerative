@@ -1,196 +1,268 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scrollytelling Character Movement</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Transition</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* 禁止預設捲軸，改用 JS 控制 */
+            background-color: #000;
+        }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: Arial, Helvetica, sans-serif;
-    }
+        #game-stage {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    #game-stage {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-    }
+        /* 背景層 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('images/green1.png'); /* 預設陸地 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1;
+            /* 簡單的視差位移 */
+            will-change: transform; 
+        }
 
-    #background {
-      position: fixed;
-      inset: 0;
-      background-image: url('images/green1.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-      z-index: 1;
-      transform: translateX(0px);
-    }
+        /* 主角層 */
+        #character {
+            position: absolute;
+            bottom: 10%; /* 距離底部的位置 */
+            left: 0;
+            z-index: 10;
+            
+            /* 預設尺寸 (陸地) */
+            width: 109.6px;
+            height: 180px;
 
-    #character {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 109.6px;
-      height: 180px;
-      z-index: 3;
-      background-repeat: no-repeat;
-      background-position: center bottom;
-      background-size: contain;
-      will-change: transform, width, height;
-    }
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center bottom;
+            
+            /* 平滑過渡尺寸變化 */
+            transition: width 0.1s, height 0.1s;
+        }
 
-    #transition-wave {
-      position: absolute;
-      left: 0;
-      top: 100%;
-      width: 100%;
-      height: 400%;
-      background-image: url('images/wave.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      z-index: 4;
-      transition: top 1s ease-in-out;
-      pointer-events: none;
-    }
+        /* 轉場波浪層 (核彈級修正版) */
+        #transition-wave {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            z-index: 999;
+            pointer-events: none;
 
-    #transition-wave.active {
-      top: -300%;
-    }
-  </style>
+            /* 關鍵設定：高度 400%，起始位置在螢幕下方 */
+            height: 400%;
+            top: 100%;
+            
+            background-image: url('images/wave.png');
+            background-size: cover;
+            background-position: top center;
+
+            /* 動畫過渡設定 */
+            transition: top 1.5s ease-in-out;
+        }
+
+        /* 當波浪升起時的 Class */
+        #transition-wave.active {
+            top: -300%; /* 把波浪往上拉，直到蓋住螢幕 */
+        }
+
+    </style>
 </head>
 <body>
-  <div id="game-stage">
+
+<div id="game-stage">
     <div id="background"></div>
-    <div id="character" aria-label="Character"></div>
+    <div id="character"></div>
     <div id="transition-wave"></div>
-  </div>
+</div>
 
-  <script>
-    // CONFIG
+<script>
+    // ==========================================
+    // 1. 設定檔 (CONFIG)
+    // ==========================================
     const CONFIG = {
-      land: {
-        bg: 'images/green1.png',
-        dims: { w: '109.6px', h: '180px' },
-        frames: 6,
-        prefix: 'svgs/Walk_man_'
-      },
-      water: {
-        bg: 'images/blue1.png',
-        dims: { w: '225.2px', h: '181.3px' },
-        frames: 7,
-        prefix: 'svgs/Swim_man_'
-      }
+        land: {
+            bg: 'images/green1.png',
+            dims: { w: '109.6px', h: '180px' }, // 精準尺寸
+            frames: 6, // Walk_man1 ~ 6
+            pathPrefix: 'svgs/Walk_man_',
+            ext: '.svg' // 如果是 svg 請改成 .svg
+        },
+        water: {
+            bg: 'images/blue1.png',
+            dims: { w: '225.2px', h: '181.3px' }, // 精準尺寸
+            frames: 7, // Swim_man1 ~ 7
+            pathPrefix: 'svgs/Swim_man_',
+            ext: '.svg'
+        }
     };
 
-    // STATE
-    let state = {
-      isWater: false,
-      isLocked: false,
-      charX: 0,
-      bgX: 0,
-      frameIndex: 1
+    // ==========================================
+    // 2. 狀態管理 (State)
+    // ==========================================
+    const state = {
+        isWater: false,      // 目前是否在水下
+        isLocked: false,     // 是否正在轉場 (鎖定操作)
+        charX: 50,           // 主角位置 (預設給一點空間)
+        bgX: 0,              // 背景位置
+        frameIndex: 1,       // 目前動畫幀
+        direction: 1         // 1: 向右, -1: 向左
     };
 
-    // ELEMENTS
-    const els = {
-      char: document.getElementById('character'),
-      bg: document.getElementById('background'),
-      wave: document.getElementById('transition-wave')
+    // DOM 元素
+    const el = {
+        char: document.getElementById('character'),
+        bg: document.getElementById('background'),
+        wave: document.getElementById('transition-wave')
     };
 
-    // INIT
+    // ==========================================
+    // 3. 初始化 (Init)
+    // ==========================================
     function init() {
-      Object.assign(els.char.style, {
-        width: CONFIG.land.dims.w,
-        height: CONFIG.land.dims.h,
-        backgroundImage: `url('${CONFIG.land.prefix}1.svg')`
-      });
-    }
-
-    // RENDER
-    function render() {
-      els.char.style.transform = `translateX(${state.charX}px)`;
-      els.bg.style.transform = `translateX(${state.bgX}px)`;
-    }
-
-    // SCROLL HANDLER
-    window.addEventListener('wheel', (e) => {
-      if (state.isLocked) return;
-
-      const speed = 5;
-      const direction = e.deltaY > 0 ? 1 : -1;
-
-      state.frameIndex += 0.2;
-
-      if (direction > 0) {
-        state.charX += speed;
-        state.bgX -= speed * 0.5;
-        els.char.style.transform = `scaleX(1) translateX(${state.charX}px)`;
-
-        if (!state.isWater && state.charX > window.innerWidth) {
-          triggerTransition('toWater');
-        }
-      } else {
-        state.charX -= speed;
-        state.bgX += speed * 0.5;
-        els.char.style.transform = `scaleX(-1) translateX(${Math.abs(state.charX)}px)`;
-
-        if (state.isWater && state.charX < -50) {
-          triggerTransition('toLand');
-        }
-      }
-
-      const currentConfig = state.isWater ? CONFIG.water : CONFIG.land;
-      const frame = Math.floor(state.frameIndex) % currentConfig.frames + 1;
-      const extension = state.isWater ? 'png' : 'svg';
-      els.char.style.backgroundImage = `url('${currentConfig.prefix}${frame}.${extension}')`;
-
-      render();
-    }, { passive: true });
-
-    // TRANSITION HANDLER
-    function triggerTransition(type) {
-      if (state.isLocked) return;
-      state.isLocked = true;
-
-      els.wave.classList.add('active');
-
-      setTimeout(() => {
-        if (type === 'toWater') {
-          state.isWater = true;
-          state.charX = 0;
-          state.bgX = 0;
-          els.char.style.width = CONFIG.water.dims.w;
-          els.char.style.height = CONFIG.water.dims.h;
-          els.bg.style.backgroundImage = `url('${CONFIG.water.bg}')`;
-        } else {
-          state.isWater = false;
-          state.charX = window.innerWidth - 150;
-          els.char.style.width = CONFIG.land.dims.w;
-          els.char.style.height = CONFIG.land.dims.h;
-          els.bg.style.backgroundImage = `url('${CONFIG.land.bg}')`;
-        }
-
-        state.frameIndex = 1;
+        // 設定初始外觀 (陸地)
+        updateCharacterAppearance();
         render();
-      }, 1000);
-
-      setTimeout(() => {
-        els.wave.classList.remove('active');
-        state.isLocked = false;
-      }, 2000);
     }
 
+    // ==========================================
+    // 4. 核心邏輯 (Logic)
+    // ==========================================
+    
+    // 監聽滑鼠滾輪
+    window.addEventListener('wheel', (e) => {
+        if (state.isLocked) return; // 轉場中禁止移動
+
+        // 判斷滾動方向 (向右走 或 向左走)
+        const moveDirection = e.deltaY > 0 ? 1 : -1;
+        const speed = 8; // 移動速度
+
+        state.direction = moveDirection;
+
+        // 計算新位置
+        if (moveDirection === 1) {
+            // 向右走
+            state.charX += speed;
+            state.bgX -= speed * 0.2; // 背景視差 (移動較慢)
+            
+            // 檢查：是否到達陸地終點 (觸發下水)
+            if (!state.isWater && state.charX > window.innerWidth) {
+                triggerTransition('toWater');
+            }
+        } else {
+            // 向左走
+            state.charX -= speed;
+            state.bgX += speed * 0.2;
+
+            // 檢查：是否到達海洋起點 (觸發上岸)
+            // 稍微留一點緩衝區 (-50) 避免誤觸
+            if (state.isWater && state.charX < -50) { 
+                triggerTransition('toLand');
+            }
+        }
+
+        // 更新動畫幀 (走路/游泳)
+        // 每次滾動增加一點點 frameIndex
+        state.frameIndex += 0.25; 
+
+        render();
+    });
+
+    // 渲染畫面
+    function render() {
+        // 1. 設定主角位置與面向
+        // scaleX(1) = 面向右, scaleX(-1) = 面向左
+        const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
+        el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
+
+        // 2. 設定背景位置
+        el.bg.style.transform = `translateX(${state.bgX}px)`;
+
+        // 3. 設定主角圖片 (動畫)
+        const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
+        // 算式：(frameIndex 取整數) 除以 總幀數 取餘數 + 1 => 循環 1~6 或 1~7
+        const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
+        
+        // 組合路徑: svgs/Walk_man + 1 + .png
+        el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
+    }
+
+    // 更新主角尺寸與背景 (不含動畫，僅設定數值)
+    function updateCharacterAppearance() {
+        const conf = state.isWater ? CONFIG.water : CONFIG.land;
+        
+        // 設定精準尺寸
+        el.char.style.width = conf.dims.w;
+        el.char.style.height = conf.dims.h;
+        
+        // 設定背景圖
+        el.bg.style.backgroundImage = `url('${conf.bg}')`;
+        
+        // 重設動畫幀
+        state.frameIndex = 1;
+    }
+
+    // ==========================================
+    // 5. 轉場特效 (Transition)
+    // ==========================================
+    function triggerTransition(type) {
+        if (state.isLocked) return;
+        state.isLocked = true; // 鎖定輸入
+        console.log(`開始轉場: ${type}`);
+
+        // 1. 波浪升起 (CSS動畫)
+        el.wave.classList.add('active');
+
+        // 2. 等待波浪蓋住螢幕 (約 1200ms 後執行交換)
+        // 這裡的時間要配合 CSS 的 transition: top 1.5s，抓大概 3/4 的時間點
+        setTimeout(() => {
+            
+            // === 執行「偷天換日」 ===
+            if (type === 'toWater') {
+                state.isWater = true;
+                state.charX = 0; // 傳送到左邊
+                state.bgX = 0;   // 重置背景
+            } else {
+                state.isWater = false;
+                state.charX = window.innerWidth - 150; // 傳送到右邊
+                // 這裡不一定要重置 bgX，看需求，通常重置比較不會亂
+            }
+
+            // 更新尺寸與圖片
+            updateCharacterAppearance();
+            
+            // 強制重新渲染一次位置 (避免閃爍)
+            render();
+
+        }, 1200);
+
+        // 3. 波浪落下 & 解鎖
+        // 總共等待 2500ms (波浪升起 1.5s + 停留 + 落下)
+        setTimeout(() => {
+            el.wave.classList.remove('active');
+            state.isLocked = false;
+        }, 2500);
+    }
+
+    // 啟動!
     init();
-  </script>
+
+</script>
+
 </body>
 </html>
