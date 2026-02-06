@@ -21,21 +21,16 @@
             overflow: hidden;
         }
 
-        /* === 背景層 === */
         #background {
             position: fixed;
             top: 0;
             left: 0;
-            
-            /* 設定背景比螢幕寬，讓它有捲動空間 */
             width: 160vw; 
             height: 100%;
-            
             background-image: url('images/green1.png');
             background-size: cover; 
-            background-position: left center; /* 強制靠左對齊 */
+            background-position: left center;
             background-repeat: no-repeat;
-            
             z-index: 1;
             will-change: transform; 
         }
@@ -87,7 +82,7 @@
             bg: 'images/green1.png',
             dims: { w: '109.6px', h: '180px' },
             frames: 6,
-            pathPrefix: 'svgs/Walk_man_', // 確保這裡跟您的檔名一致
+            pathPrefix: 'svgs/Walk_man_',
             ext: '.svg'
         },
         water: {
@@ -119,17 +114,11 @@
         render();
     }
 
-    // === 核心修正：計算背景移動邊界 ===
     function clampBackground(newBgX) {
         const stageWidth = window.innerWidth;
-        const bgWidth = el.bg.offsetWidth; // 取得背景實際像素寬度 (160vw)
-        
-        // 計算最小允許的 X 值 (負數)
-        // 例如：螢幕 1000px，背景 1600px，則最少可以捲到 -600px
+        const bgWidth = el.bg.offsetWidth; 
         const minBgX = stageWidth - bgWidth;
-        const maxBgX = 0; // 最多捲到 0 (靠左)
-
-        // 數學限制：確保數值不超出 [min, max] 範圍
+        const maxBgX = 0; 
         return Math.min(Math.max(newBgX, minBgX), maxBgX);
     }
 
@@ -141,31 +130,56 @@
 
         state.direction = moveDirection;
 
-        // 預先計算新的背景位置
-        let nextBgX = state.bgX;
+        // 1. 計算「預想」的下一步位置
+        let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
-        if (moveDirection === 1) {
-            // 向右走
-            state.charX += speed;
-            nextBgX -= speed * 0.3; // 背景往左移
+        // 🔴 關鍵修正：角色邊界限制 (隱形牆)
+        if (!state.isWater) {
+            // === 陸地模式 ===
+            // 左邊有牆 (不能小於 0)
+            if (nextCharX < 0) nextCharX = 0;
+            // 右邊沒牆 (允許大於螢幕寬，因為要觸發轉場)
+        } else {
+            // === 水下模式 ===
+            // 左邊沒牆 (允許小於 0，因為要觸發轉場)
+            // 右邊有牆 (不能超出螢幕右邊緣)
+            // 計算右邊界：螢幕寬度 - 主角當下的寬度
+            const maxRight = window.innerWidth - el.char.offsetWidth;
+            if (nextCharX > maxRight) nextCharX = maxRight;
+        }
+
+        // 只有當位置真的有改變時 (沒撞牆)，才更新狀態
+        if (nextCharX !== state.charX) {
             
+            // 更新主角位置
+            state.charX = nextCharX;
+
+            // 更新背景位置 (只有人動的時候，背景才跟著動)
+            let nextBgX = state.bgX;
+            if (moveDirection === 1) {
+                nextBgX -= speed * 0.3; 
+            } else {
+                nextBgX += speed * 0.3; 
+            }
+            state.bgX = clampBackground(nextBgX);
+
+            // 更新動畫幀
+            state.frameIndex += 0.25; 
+        }
+
+        // 檢查轉場觸發條件
+        if (moveDirection === 1) {
+            // 向右走且在陸地 -> 觸發下水
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
             }
         } else {
-            // 向左走
-            state.charX -= speed;
-            nextBgX += speed * 0.3; // 背景往右移
-
+            // 向左走且在水下 -> 觸發上岸
             if (state.isWater && state.charX < -50) { 
                 triggerTransition('toLand');
             }
         }
 
-        // 🔴 這裡套用了邊界限制函數
-        state.bgX = clampBackground(nextBgX);
-
-        state.frameIndex += 0.25; 
         render();
     });
 
@@ -197,13 +211,10 @@
             if (type === 'toWater') {
                 state.isWater = true;
                 state.charX = 0; 
-                state.bgX = 0; // 下水時，背景重置到左邊 (0)
+                state.bgX = 0; 
             } else {
                 state.isWater = false;
                 state.charX = window.innerWidth - 150; 
-                
-                // 🔴 回到陸地時，我們要讓背景停在「最右邊」
-                // 計算公式：螢幕寬 - 背景寬
                 const bgWidth = el.bg.offsetWidth;
                 state.bgX = window.innerWidth - bgWidth;
             }
@@ -219,7 +230,6 @@
         }, 2500);
     }
 
-    // 視窗大小改變時，重新校正背景 (避免視窗拉大後露餡)
     window.addEventListener('resize', () => {
         state.bgX = clampBackground(state.bgX);
         render();
