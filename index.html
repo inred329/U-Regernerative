@@ -71,10 +71,10 @@
 
     .middle-blend {
       position: absolute;
-      top: 50%;
+      top: 0;
       left: calc(var(--split) * 1%);
-      transform: translate(-50%, -50%);
-      height: 100%;
+      transform: translateX(-50%);
+      height: 100vh;
       width: auto;
       max-width: 200px;
       min-width: 80px;
@@ -196,7 +196,7 @@
       const pointerX = event.clientX;
       const width = window.innerWidth;
       const percentage = (pointerX / width) * 100;
-      targetSplit = clamp(percentage, 20, 80);
+      targetSplit = clamp(100 - percentage, 20, 80);
 
       if (!animationFrame) {
         animationFrame = requestAnimationFrame(updateSplit);
