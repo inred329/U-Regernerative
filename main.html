@@ -21,21 +21,19 @@
             overflow: hidden;
         }
 
-        /* === 修正後的背景層 === */
+        /* === 背景層 === */
         #background {
             position: fixed;
             top: 0;
             left: 0;
             
-            /* 🔴 關鍵修改：讓背景比螢幕寬，這樣才有空間可以「捲動」 */
-            width: 160vw; /* 設為螢幕寬度的 1.6 倍，您可以根據圖片寬度調整這個數值 */
+            /* 設定背景比螢幕寬，讓它有捲動空間 */
+            width: 160vw; 
             height: 100%;
             
             background-image: url('images/green1.png');
-            
-            /* 🔴 關鍵修改：確保圖片高度填滿，寬度自動延伸，不會被裁切 */
             background-size: cover; 
-            background-position: left center; /* 從左邊開始對齊 */
+            background-position: left center; /* 強制靠左對齊 */
             background-repeat: no-repeat;
             
             z-index: 1;
@@ -89,7 +87,7 @@
             bg: 'images/green1.png',
             dims: { w: '109.6px', h: '180px' },
             frames: 6,
-            pathPrefix: 'svgs/Walk_man_',
+            pathPrefix: 'svgs/Walk_man_', // 確保這裡跟您的檔名一致
             ext: '.svg'
         },
         water: {
@@ -121,6 +119,20 @@
         render();
     }
 
+    // === 核心修正：計算背景移動邊界 ===
+    function clampBackground(newBgX) {
+        const stageWidth = window.innerWidth;
+        const bgWidth = el.bg.offsetWidth; // 取得背景實際像素寬度 (160vw)
+        
+        // 計算最小允許的 X 值 (負數)
+        // 例如：螢幕 1000px，背景 1600px，則最少可以捲到 -600px
+        const minBgX = stageWidth - bgWidth;
+        const maxBgX = 0; // 最多捲到 0 (靠左)
+
+        // 數學限制：確保數值不超出 [min, max] 範圍
+        return Math.min(Math.max(newBgX, minBgX), maxBgX);
+    }
+
     window.addEventListener('wheel', (e) => {
         if (state.isLocked) return;
 
@@ -129,14 +141,13 @@
 
         state.direction = moveDirection;
 
+        // 預先計算新的背景位置
+        let nextBgX = state.bgX;
+
         if (moveDirection === 1) {
             // 向右走
             state.charX += speed;
-            
-            // 🔴 背景視差邏輯：
-            // 當人往右走，背景要往左移 (負值)
-            // 係數 0.3 代表背景移動速度是人的 30%
-            state.bgX -= speed * 0.3; 
+            nextBgX -= speed * 0.3; // 背景往左移
             
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
@@ -144,12 +155,15 @@
         } else {
             // 向左走
             state.charX -= speed;
-            state.bgX += speed * 0.3;
+            nextBgX += speed * 0.3; // 背景往右移
 
             if (state.isWater && state.charX < -50) { 
                 triggerTransition('toLand');
             }
         }
+
+        // 🔴 這裡套用了邊界限制函數
+        state.bgX = clampBackground(nextBgX);
 
         state.frameIndex += 0.25; 
         render();
@@ -162,9 +176,6 @@
 
         const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
         const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
-        
-        // 注意：這裡假設您的檔名是 Walk_man1.png (沒有下底線)
-        // 如果您的檔名是 Walk_man_1.png，請修改 CONFIG 中的 pathPrefix
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
     }
 
@@ -179,23 +190,22 @@
     function triggerTransition(type) {
         if (state.isLocked) return;
         state.isLocked = true;
-        console.log(`開始轉場: ${type}`);
-
+        
         el.wave.classList.add('active');
 
         setTimeout(() => {
             if (type === 'toWater') {
                 state.isWater = true;
                 state.charX = 0; 
-                state.bgX = 0;   // 重置背景位置
+                state.bgX = 0; // 下水時，背景重置到左邊 (0)
             } else {
                 state.isWater = false;
                 state.charX = window.innerWidth - 150; 
                 
-                // 🔴 回到陸地時，背景也要設回「最右邊」的狀態
-                // 這樣才會有「走回來」的感覺
-                // 假設背景寬度偏移量大概是 -300px (視差累積)
-                state.bgX = -300; 
+                // 🔴 回到陸地時，我們要讓背景停在「最右邊」
+                // 計算公式：螢幕寬 - 背景寬
+                const bgWidth = el.bg.offsetWidth;
+                state.bgX = window.innerWidth - bgWidth;
             }
 
             updateCharacterAppearance();
@@ -208,6 +218,12 @@
             state.isLocked = false;
         }, 2500);
     }
+
+    // 視窗大小改變時，重新校正背景 (避免視窗拉大後露餡)
+    window.addEventListener('resize', () => {
+        state.bgX = clampBackground(state.bgX);
+        render();
+    });
 
     init();
 
