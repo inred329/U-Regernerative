@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrollytelling Character Movement</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #game-stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #background {
+      position: fixed;
+      inset: 0;
+      background-image: url('images/green1.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      z-index: 1;
+      transform: translateX(0px);
+    }
+
+    #character {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 109.6px;
+      height: 180px;
+      z-index: 3;
+      background-repeat: no-repeat;
+      background-position: center bottom;
+      background-size: contain;
+      will-change: transform, width, height;
+    }
+
+    #transition-wave {
+      position: absolute;
+      left: 0;
+      top: 100%;
+      width: 100%;
+      height: 400%;
+      background-image: url('images/wave.png');
+      background-size: cover;
+      background-repeat: no-repeat;
+      z-index: 4;
+      transition: top 0.9s ease-in-out;
+      pointer-events: none;
+    }
+
+    #transition-wave.is-active {
+      top: -300%;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-stage">
+    <div id="background"></div>
+    <div id="character" aria-label="Character"></div>
+    <div id="transition-wave"></div>
+  </div>
+
+  <script>
+    const background = document.getElementById('background');
+    const character = document.getElementById('character');
+    const wave = document.getElementById('transition-wave');
+
+    const walkSprites = Array.from({ length: 6 }, (_, i) => `images/Walk_man__${i + 1}.svg`);
+    const swimSprites = Array.from({ length: 7 }, (_, i) => `images/Swim_man__${i + 1}.svg`);
+
+    let isWaterLevel = false;
+    let isTransitioning = false;
+    let currentFrame = 0;
+    let charX = 0;
+    let bgX = 0;
+    let lastStep = 0;
+
+    const stepDistance = 60;
+    const parallaxFactor = 0.35;
+
+    function updateSprite(frames) {
+      character.style.backgroundImage = `url('${frames[currentFrame]}')`;
+    }
+
+    function updateCharacterPosition() {
+      character.style.transform = `translateX(${charX}px)`;
+    }
+
+    function updateBackgroundPosition() {
+      background.style.transform = `translateX(${bgX}px)`;
+    }
+
+    function clampChar() {
+      const maxX = window.innerWidth - character.offsetWidth;
+      charX = Math.min(Math.max(charX, -character.offsetWidth), maxX + character.offsetWidth);
+    }
+
+    function handleScroll(delta) {
+      if (isTransitioning) return;
+
+      charX += delta;
+      bgX -= delta * parallaxFactor;
+
+      clampChar();
+
+      const distance = Math.abs(charX - lastStep);
+      if (distance >= stepDistance) {
+        const frames = isWaterLevel ? swimSprites : walkSprites;
+        currentFrame = (currentFrame + 1) % frames.length;
+        updateSprite(frames);
+        lastStep = charX;
+      }
+
+      updateCharacterPosition();
+      updateBackgroundPosition();
+
+      if (!isWaterLevel && charX > window.innerWidth) {
+        handleTransition(true);
+      }
+
+      if (isWaterLevel && charX < 0) {
+        handleTransition(false);
+      }
+    }
+
+    function handleTransition(goToWater) {
+      if (isTransitioning) return;
+      isTransitioning = true;
+      wave.classList.add('is-active');
+
+      setTimeout(() => {
+        if (goToWater) {
+          isWaterLevel = true;
+          background.style.backgroundImage = "url('images/blue1.png')";
+          character.style.width = '225.2px';
+          character.style.height = '181.3px';
+          charX = 0;
+          currentFrame = 0;
+          updateSprite(swimSprites);
+        } else {
+          isWaterLevel = false;
+          background.style.backgroundImage = "url('images/green1.png')";
+          character.style.width = '109.6px';
+          character.style.height = '180px';
+          charX = window.innerWidth - 150;
+          currentFrame = 0;
+          updateSprite(walkSprites);
+        }
+
+        updateCharacterPosition();
+      }, 500);
+
+      setTimeout(() => {
+        wave.classList.remove('is-active');
+      }, 900);
+
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 1600);
+    }
+
+    function init() {
+      updateSprite(walkSprites);
+      updateCharacterPosition();
+      updateBackgroundPosition();
+    }
+
+    window.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      const delta = event.deltaY > 0 ? 40 : -40;
+      handleScroll(delta);
+    }, { passive: false });
+
+    window.addEventListener('resize', () => {
+      clampChar();
+      updateCharacterPosition();
+    });
+
+    init();
+  </script>
+</body>
+</html>
