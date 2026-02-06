@@ -6,7 +6,6 @@
   <title>Interactive Split Landing</title>
   <style>
     :root {
-      --split: 50;
       --overlay-color: rgba(0, 0, 0, 0.35);
       --button-border: rgba(255, 255, 255, 0.9);
       --button-fill: rgba(255, 255, 255, 0.9);
@@ -38,30 +37,22 @@
       background: #000;
     }
 
-    .panel {
+    .split {
       position: relative;
-      flex: 0 0 calc(var(--panel-width) * 1%);
+      flex: 0 0 50%;
       height: 100%;
       overflow: hidden;
-      transition: flex-basis 0.25s ease;
+      transition: flex-basis 1000ms ease-in-out;
     }
 
-    .panel.left {
-      --panel-width: var(--split);
-    }
-
-    .panel.right {
-      --panel-width: calc(100 - var(--split));
-    }
-
-    .panel video {
+    .split video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       filter: brightness(0.85);
     }
 
-    .panel::after {
+    .split::after {
       content: "";
       position: absolute;
       inset: 0;
@@ -69,10 +60,26 @@
       pointer-events: none;
     }
 
+    .split-wrapper.hover-left .split.left {
+      flex-basis: 75%;
+    }
+
+    .split-wrapper.hover-left .split.right {
+      flex-basis: 25%;
+    }
+
+    .split-wrapper.hover-right .split.left {
+      flex-basis: 25%;
+    }
+
+    .split-wrapper.hover-right .split.right {
+      flex-basis: 75%;
+    }
+
     .middle-blend {
       position: absolute;
       top: 0;
-      left: calc(var(--split) * 1%);
+      left: 50%;
       transform: translateX(-50%);
       height: 100vh;
       width: auto;
@@ -80,6 +87,15 @@
       min-width: 80px;
       z-index: 3;
       pointer-events: none;
+      transition: left 1000ms ease-in-out;
+    }
+
+    .split-wrapper.hover-left .middle-blend {
+      left: 75%;
+    }
+
+    .split-wrapper.hover-right .middle-blend {
+      left: 25%;
     }
 
     .center-overlay {
@@ -150,10 +166,10 @@
 </head>
 <body>
   <main class="split-wrapper" id="splitWrapper">
-    <section class="panel left">
+    <section class="split left" id="leftSplit">
       <video src="videos/left.mov" autoplay muted loop playsinline></video>
     </section>
-    <section class="panel right">
+    <section class="split right" id="rightSplit">
       <video src="videos/right.mov" autoplay muted loop playsinline></video>
     </section>
 
@@ -167,56 +183,22 @@
 
   <script>
     const wrapper = document.getElementById("splitWrapper");
-    const root = document.documentElement;
-    const middleImage = document.querySelector(".middle-blend");
-    let targetSplit = 50;
-    let currentSplit = 50;
-    let animationFrame = null;
+    const leftSplit = document.getElementById("leftSplit");
+    const rightSplit = document.getElementById("rightSplit");
 
-    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
-    const isTouchDevice = () =>
-      window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0;
-
-    const updateSplit = () => {
-      currentSplit += (targetSplit - currentSplit) * 0.12;
-      root.style.setProperty("--split", currentSplit.toFixed(2));
-      middleImage.style.left = `${currentSplit.toFixed(2)}%`;
-
-      if (Math.abs(targetSplit - currentSplit) > 0.1) {
-        animationFrame = requestAnimationFrame(updateSplit);
-      } else {
-        currentSplit = targetSplit;
-        root.style.setProperty("--split", currentSplit.toFixed(2));
-        middleImage.style.left = `${currentSplit.toFixed(2)}%`;
-        animationFrame = null;
+    const setHoverState = (state) => {
+      wrapper.classList.remove("hover-left", "hover-right");
+      if (state) {
+        wrapper.classList.add(state);
       }
     };
 
-    const handleMove = (event) => {
-      const pointerX = event.clientX;
-      const width = window.innerWidth;
-      const percentage = (pointerX / width) * 100;
-      targetSplit = clamp(100 - percentage, 20, 80);
+    leftSplit.addEventListener("mouseenter", () => setHoverState("hover-left"));
+    rightSplit.addEventListener("mouseenter", () =>
+      setHoverState("hover-right")
+    );
 
-      if (!animationFrame) {
-        animationFrame = requestAnimationFrame(updateSplit);
-      }
-    };
-
-    if (!isTouchDevice()) {
-      wrapper.addEventListener("mousemove", handleMove);
-    } else {
-      root.style.setProperty("--split", "50");
-    }
-
-    window.addEventListener("resize", () => {
-      if (isTouchDevice()) {
-        root.style.setProperty("--split", "50");
-      }
-    });
+    wrapper.addEventListener("mouseleave", () => setHoverState(null));
   </script>
 </body>
 </html>
