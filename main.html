@@ -12,13 +12,68 @@
             height: 100%;
             overflow: hidden;
             background-color: #000;
+            font-family: sans-serif;
         }
 
+        /* =========================================
+           🔴 Loading 畫面樣式
+           ========================================= */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading-screen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-bar-container {
+            width: 300px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .loading-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.1s linear;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        /* =========================================
+           遊戲舞台
+           ========================================= */
         #game-stage {
             position: relative;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            opacity: 0; /* 預設隱藏，載入完再顯示 */
+            transition: opacity 0.5s ease;
+        }
+
+        #game-stage.ready {
+            opacity: 1;
         }
 
         #scrolling-layer {
@@ -93,9 +148,7 @@
             top: -300%;
         }
 
-        /* =========================================
-           卡片系統樣式
-           ========================================= */
+        /* 卡片系統 */
         #card-system {
             position: fixed;
             top: 0;
@@ -103,15 +156,12 @@
             width: 100vw;
             height: 100vh;
             z-index: 2000;
-            
             background-color: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            
             display: flex;
             justify-content: center;
             align-items: center;
-            
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.4s ease;
@@ -125,8 +175,7 @@
         .card-content-wrapper {
             display: flex;
             gap: 100px; 
-            align-items: flex-start; 
-            
+            align-items: flex-start;
             transform: scale(0.9);
             opacity: 0;
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
@@ -149,7 +198,6 @@
             object-fit: fill; 
             background-color: transparent;
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-            /* 讓左邊卡片雖然不能點擊互動，但也不會穿透 */
             cursor: default; 
         }
 
@@ -166,45 +214,29 @@
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
         }
 
-        .card-stack-img[data-layer="1"] {
-            z-index: 3;
-            transform: translateX(0px) scale(1);
-            filter: brightness(1);
-        }
-        
-        .card-stack-img[data-layer="2"] {
-            z-index: 2;
-            transform: translateX(100px) scale(0.95); 
-            filter: brightness(0.6); 
-        }
-        
-        .card-stack-img[data-layer="3"] {
-            z-index: 1;
-            transform: translateX(200px) scale(0.9);
-            filter: brightness(0.4);
-        }
+        .card-stack-img[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); filter: brightness(1); }
+        .card-stack-img[data-layer="2"] { z-index: 2; transform: translateX(100px) scale(0.95); filter: brightness(0.6); }
+        .card-stack-img[data-layer="3"] { z-index: 1; transform: translateX(200px) scale(0.9); filter: brightness(0.4); }
 
         @media (max-width: 900px) {
-            .card-content-wrapper {
-                flex-direction: column;
-                align-items: center;
-                gap: 40px; 
-                transform: scale(0.65) !important;
-            }
-            #card-system.show .card-content-wrapper {
-                transform: scale(0.75) !important;
-            }
+            .card-content-wrapper { flex-direction: column; align-items: center; gap: 40px; transform: scale(0.65) !important; }
+            #card-system.show .card-content-wrapper { transform: scale(0.75) !important; }
         }
 
     </style>
 </head>
 <body>
 
+<div id="loading-screen">
+    <div class="loading-text">LOADING... 0%</div>
+    <div class="loading-bar-container">
+        <div class="loading-bar"></div>
+    </div>
+</div>
+
 <div id="game-stage">
-    
     <div id="scrolling-layer">
-        <img id="bg-img" src="images/green1.png" alt="Background">
-        <div class="scene-obj" id="obj1"></div>
+        <img id="bg-img" src="" alt="Background"> <div class="scene-obj" id="obj1"></div>
         <div class="scene-obj" id="obj2"></div>
     </div>
 
@@ -213,20 +245,16 @@
 
     <div id="card-system">
         <div class="card-content-wrapper">
-            
             <div class="card-left-section">
                 <img id="card-left-display" class="card-left-img" src="" alt="Intro Card">
             </div>
-
             <div class="card-right-section">
                 <img class="card-stack-img" data-layer="1" data-index="1" src="" alt="Card 1">
                 <img class="card-stack-img" data-layer="2" data-index="2" src="" alt="Card 2">
                 <img class="card-stack-img" data-layer="3" data-index="3" src="" alt="Card 3">
             </div>
-
         </div>
     </div>
-
 </div>
 
 <script>
@@ -257,13 +285,17 @@
 
     const state = {
         isWater: false,
-        isLocked: false,
+        isLocked: true, // 🔴 預設鎖定，等載入完才解鎖
         charX: 50,
         frameIndex: 1,
         direction: 1
     };
 
     const el = {
+        loadingScreen: document.getElementById('loading-screen'),
+        loadingBar: document.querySelector('.loading-bar'),
+        loadingText: document.querySelector('.loading-text'),
+        gameStage: document.getElementById('game-stage'),
         char: document.getElementById('character'),
         scrollingLayer: document.getElementById('scrolling-layer'),
         bgImg: document.getElementById('bg-img'),
@@ -275,14 +307,88 @@
         stackCards: document.querySelectorAll('.card-stack-img')
     };
 
-    function init() {
+    // =========================================
+    // 🔴 預載入核心邏輯
+    // =========================================
+    function preloadAllAssets() {
+        // 1. 收集所有需要載入的圖片路徑
+        let imagesToLoad = [
+            'images/wave.png',
+            CONFIG.land.bg,
+            CONFIG.water.bg
+        ];
+
+        // 收集主角動畫 (Walk & Swim)
+        for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
+        for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
+
+        // 收集物件及其發光版、卡片
+        const allObjects = [...CONFIG.land.objects, ...CONFIG.water.objects];
+        allObjects.forEach(obj => {
+            imagesToLoad.push(obj.src);
+            imagesToLoad.push(obj.src.replace('.png', '-glow.png')); // 發光版
+            // 卡片
+            imagesToLoad.push(`images/${obj.id}_card_left.png`);
+            imagesToLoad.push(`images/${obj.id}_card_1.png`);
+            imagesToLoad.push(`images/${obj.id}_card_2.png`);
+            imagesToLoad.push(`images/${obj.id}_card_3.png`);
+        });
+
+        let loadedCount = 0;
+        const total = imagesToLoad.length;
+
+        // 2. 開始下載
+        if (total === 0) {
+            startGame();
+            return;
+        }
+
+        imagesToLoad.forEach(src => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                loadedCount++;
+                updateLoadingProgress(loadedCount, total);
+            };
+            img.onerror = () => {
+                console.warn(`Failed to load: ${src}`); // 容錯：就算圖片不見也繼續
+                loadedCount++;
+                updateLoadingProgress(loadedCount, total);
+            };
+        });
+    }
+
+    function updateLoadingProgress(current, total) {
+        const percent = Math.floor((current / total) * 100);
+        el.loadingBar.style.width = `${percent}%`;
+        el.loadingText.textContent = `LOADING... ${percent}%`;
+
+        if (current >= total) {
+            setTimeout(startGame, 500); // 稍微停一下讓使用者看到 100%
+        }
+    }
+
+    function startGame() {
+        el.loadingScreen.classList.add('fade-out'); // 淡出 Loading
+        el.gameStage.classList.add('ready'); // 淡入遊戲
+        
+        // 初始化遊戲畫面
         el.bgImg.onload = () => { render(); };
         updateSceneAssets();
         setupObjectInteractions();
         setupCardSystem();
         render();
+
+        // 解鎖操作
+        setTimeout(() => {
+            state.isLocked = false;
+        }, 500);
     }
 
+    // =========================================
+    // 遊戲邏輯 (與之前相同)
+    // =========================================
+    
     function setupObjectInteractions() {
         const objects = [el.obj1, el.obj2];
         objects.forEach(obj => {
@@ -310,7 +416,6 @@
     }
 
     function setupCardSystem() {
-        // 1. 右邊堆疊卡：點擊時停止冒泡 (已經有了)
         el.stackCards.forEach(card => {
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -320,15 +425,8 @@
             });
         });
 
-        // 2. 🔴 修正：左邊卡片：點擊時也要停止冒泡
-        el.cardLeft.addEventListener('click', (e) => {
-            e.stopPropagation(); // 這樣點到左邊卡片就不會關閉了
-        });
-
-        // 3. 背景：點擊時關閉
-        el.cardSystem.addEventListener('click', () => {
-            closeCards();
-        });
+        el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
+        el.cardSystem.addEventListener('click', () => { closeCards(); });
     }
 
     function openCards(objectId) {
@@ -457,7 +555,9 @@
     }
 
     window.addEventListener('resize', () => { render(); });
-    init();
+    
+    // 🔴 程式進入點改為預載入
+    preloadAllAssets();
 
 </script>
 
