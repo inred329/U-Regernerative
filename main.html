@@ -21,35 +21,58 @@
             overflow: hidden;
         }
 
-        /* === 🔴 修正：捲動層容器 === */
-        /* 這個容器會包住背景圖和物件，並由 JS 控制移動 */
         #scrolling-layer {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            /* 寬度會由內部的圖片撐開 */
             will-change: transform;
             z-index: 1;
         }
 
-        /* === 🔴 修正：真實背景圖片 === */
         #bg-img {
             display: block;
-            height: 100%; /* 高度撐滿螢幕 */
-            width: auto;  /* 寬度自動計算，保持比例！ */
-            max-width: none; /* 允許超出螢幕範圍 */
+            height: 100%;
+            width: auto;
+            max-width: none;
+        }
+
+        /* === 🔴 新增：定義懸浮動畫 === */
+        @keyframes floating {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                /* 稍微往上浮動 10px，並輕微旋轉 2度 */
+                transform: translateY(-10px) rotate(2deg);
+            }
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
         }
 
         /* === 場景物件 === */
-        /* 因為放在 #scrolling-layer 裡，left: % 是相對於「整張背景圖」的寬度 */
         .scene-obj {
             position: absolute;
             background-repeat: no-repeat;
             background-size: contain;
             background-position: center;
-            z-index: 2; 
+            z-index: 2;
             transition: opacity 0.3s;
+
+            /* 🔴 套用動畫：預設 4秒，無限循環，緩進緩出 */
+            animation: floating 4s ease-in-out infinite;
+        }
+
+        /* 🔴 讓兩個物件的頻率不一樣，看起來比較自然 */
+        #obj1 {
+            animation-duration: 3.5s; /* 比較快一點 */
+            animation-delay: 0s;      /* 立即開始 */
+        }
+
+        #obj2 {
+            animation-duration: 5s;   /* 比較慢一點 */
+            animation-delay: 1.5s;    /* 延遲 1.5秒才開始 (錯開時間) */
         }
 
         /* === 主角層 === */
@@ -58,7 +81,6 @@
             bottom: 10%;
             left: 0;
             z-index: 10;
-            /* 預設大小 */
             width: 109.6px;
             height: 180px;
             background-repeat: no-repeat;
@@ -155,15 +177,14 @@
 
     const el = {
         char: document.getElementById('character'),
-        scrollingLayer: document.getElementById('scrolling-layer'), // 抓捲動層
-        bgImg: document.getElementById('bg-img'), // 抓真實圖片
+        scrollingLayer: document.getElementById('scrolling-layer'),
+        bgImg: document.getElementById('bg-img'),
         wave: document.getElementById('transition-wave'),
         obj1: document.getElementById('obj1'),
         obj2: document.getElementById('obj2')
     };
 
     function init() {
-        // 圖片載入完成後再更新一次畫面，確保抓到正確寬度
         el.bgImg.onload = () => {
             render();
         };
@@ -182,10 +203,8 @@
 
         // === 角色邊界限制 ===
         if (!state.isWater) {
-            // 陸地：左邊有牆
             if (nextCharX < 0) nextCharX = 0;
         } else {
-            // 水下：右邊有牆
             const maxRight = window.innerWidth - el.char.offsetWidth;
             if (nextCharX > maxRight) nextCharX = maxRight;
         }
@@ -209,15 +228,10 @@
         render();
     });
 
-    // 🔴 核心修正：計算背景位置 (使用真實圖片寬度)
     function getSyncedBgX() {
         const stageWidth = window.innerWidth;
-        
-        // 抓取圖片真實渲染寬度 (因為 width: auto，它會保持比例)
-        // 如果圖片還沒載入完，先預設 0 避免錯誤
         const bgWidth = el.bgImg.offsetWidth || stageWidth; 
         
-        // 如果背景圖比螢幕窄 (不太可能發生，但以防萬一)，就不需要捲動
         if (bgWidth <= stageWidth) return 0;
 
         const maxBgScroll = bgWidth - stageWidth;
@@ -225,20 +239,16 @@
         let progress = state.charX / stageWidth;
         progress = Math.min(Math.max(progress, 0), 1);
 
-        // 負值代表往左移
         return - (progress * maxBgScroll);
     }
 
     function render() {
-        // 1. 主角
         const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
         el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
 
-        // 2. 背景層 (圖片+物件)
         const bgX = getSyncedBgX();
         el.scrollingLayer.style.transform = `translateX(${bgX}px)`;
 
-        // 3. 動畫幀
         const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
         const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
@@ -251,7 +261,6 @@
         el.char.style.height = conf.dims.h;
         state.frameIndex = 1;
 
-        // 換圖片 src
         el.bgImg.src = conf.bg;
 
         const o1 = conf.objects[0];
@@ -287,12 +296,9 @@
 
             updateSceneAssets();
             
-            // 重要：轉場時圖片可能還沒載入完，這會導致寬度計算錯誤
-            // 給圖片一點時間載入後再 render 一次
             el.bgImg.onload = () => {
                 render();
             };
-            // 立即 render 一次 (以防圖片已經在快取中)
             render();
 
         }, 1200);
