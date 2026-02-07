@@ -94,7 +94,7 @@
         }
 
         /* =========================================
-           🔴 卡片系統樣式 (間距調整版)
+           卡片系統樣式
            ========================================= */
         #card-system {
             position: fixed;
@@ -103,12 +103,15 @@
             width: 100vw;
             height: 100vh;
             z-index: 2000;
+            
             background-color: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
+            
             display: flex;
             justify-content: center;
             align-items: center;
+            
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.4s ease;
@@ -121,9 +124,9 @@
 
         .card-content-wrapper {
             display: flex;
-            /* 🔴 關鍵修改：將間距改為 100px */
-            gap: 50px; 
-            align-items: flex-start;
+            gap: 100px; 
+            align-items: flex-start; 
+            
             transform: scale(0.9);
             opacity: 0;
             transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
@@ -146,6 +149,8 @@
             object-fit: fill; 
             background-color: transparent;
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+            /* 讓左邊卡片雖然不能點擊互動，但也不會穿透 */
+            cursor: default; 
         }
 
         .card-stack-img {
@@ -183,7 +188,6 @@
             .card-content-wrapper {
                 flex-direction: column;
                 align-items: center;
-                /* 手機版間距也可以稍微調整小一點 */
                 gap: 40px; 
                 transform: scale(0.65) !important;
             }
@@ -306,6 +310,7 @@
     }
 
     function setupCardSystem() {
+        // 1. 右邊堆疊卡：點擊時停止冒泡 (已經有了)
         el.stackCards.forEach(card => {
             card.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -314,6 +319,13 @@
                 }
             });
         });
+
+        // 2. 🔴 修正：左邊卡片：點擊時也要停止冒泡
+        el.cardLeft.addEventListener('click', (e) => {
+            e.stopPropagation(); // 這樣點到左邊卡片就不會關閉了
+        });
+
+        // 3. 背景：點擊時關閉
         el.cardSystem.addEventListener('click', () => {
             closeCards();
         });
