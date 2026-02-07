@@ -27,26 +27,24 @@
             top: 0;
             left: 0;
             
-            /* 🔴 修正 1：加大容器寬度，確保放得下長圖 */
-            /* 如果您的圖非常長，這裡可以設更大，例如 300vw 或 4000px */
-            width: 3300px; 
+            /* 🔴 設定虛擬世界寬度：螢幕寬度的 3 倍 (您可以根據圖片長度調整) */
+            /* 這代表您的世界有 3 個螢幕那麼長 */
+            width: 300vw; 
             height: 100%;
             
             background-image: url('images/green1.png');
             
-            /* 🔴 修正 2：改用 auto 100% */
-            /* 讓高度永遠是 100% (頂天立地)，寬度自動依照圖片比例延伸 */
-            /* 這樣就絕對不會有任何裁切 */
-            background-size: auto 100%; 
+            /* 🔴 強制高度 100%，寬度自動延伸，確保不裁切 */
+            background-size: 100% 100%; 
             
-            background-position: left center; 
+            background-position: left top;
             background-repeat: no-repeat;
             
             z-index: 1;
             will-change: transform; 
         }
 
-        /* === 場景物件樣式 === */
+        /* === 場景物件 === */
         .scene-obj {
             position: absolute;
             background-repeat: no-repeat;
@@ -117,12 +115,12 @@
                 { 
                     src: 'images/fern.png', 
                     w: '200px', h: '200px', 
-                    left: '15%', bottom: '10%' 
+                    left: '10%', bottom: '10%' // % 是相對於 300vw 的位置
                 },
                 { 
                     src: 'images/flower.png', 
                     w: '150px', h: '150px', 
-                    left: '75%', bottom: '12%' 
+                    left: '90%', bottom: '12%' // 放遠一點，接近終點
                 }
             ]
         },
@@ -136,12 +134,12 @@
                 { 
                     src: 'images/jellyfish.png', 
                     w: '160px', h: '180px', 
-                    left: '25%', bottom: '45%' 
+                    left: '20%', bottom: '45%' 
                 },
                 { 
                     src: 'images/fish.png', 
                     w: '180px', h: '120px', 
-                    left: '80%', bottom: '60%' 
+                    left: '85%', bottom: '60%' 
                 }
             ]
         }
@@ -151,7 +149,6 @@
         isWater: false,
         isLocked: false,
         charX: 50,
-        bgX: 0,
         frameIndex: 1,
         direction: 1
     };
@@ -169,14 +166,6 @@
         render();
     }
 
-    function clampBackground(newBgX) {
-        const stageWidth = window.innerWidth;
-        const bgWidth = el.bg.offsetWidth; 
-        const minBgX = stageWidth - bgWidth;
-        const maxBgX = 0; 
-        return Math.min(Math.max(newBgX, minBgX), maxBgX);
-    }
-
     window.addEventListener('wheel', (e) => {
         if (state.isLocked) return;
 
@@ -186,34 +175,29 @@
         state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
+        // === 角色邊界限制 (隱形牆) ===
         if (!state.isWater) {
+            // 陸地：左邊有牆(0)，右邊無牆(無限)
             if (nextCharX < 0) nextCharX = 0;
         } else {
+            // 水下：左邊無牆，右邊有牆(螢幕邊緣)
             const maxRight = window.innerWidth - el.char.offsetWidth;
             if (nextCharX > maxRight) nextCharX = maxRight;
         }
 
         if (nextCharX !== state.charX) {
             state.charX = nextCharX;
-
-            let nextBgX = state.bgX;
-            if (moveDirection === 1) {
-                // 🔴 調整：如果背景圖很長，可以把 0.3 改大一點 (例如 0.5)
-                // 這樣捲動速度會變快，比較容易看到圖片的尾端
-                nextBgX -= speed * 0.3; 
-            } else {
-                nextBgX += speed * 0.3; 
-            }
-            state.bgX = clampBackground(nextBgX);
-
             state.frameIndex += 0.25; 
         }
 
+        // === 轉場觸發判斷 ===
         if (moveDirection === 1) {
+            // 陸地向右 -> 下水
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
             }
         } else {
+            // 水下向左 -> 上岸
             if (state.isWater && state.charX < -50) { 
                 triggerTransition('toLand');
             }
@@ -222,11 +206,37 @@
         render();
     });
 
+    // 🔴 核心修正：計算背景位置的函式 (同步率計算)
+    function getSyncedBgX() {
+        const stageWidth = window.innerWidth;
+        const bgWidth = el.bg.offsetWidth; // 300vw
+        
+        // 背景最大可移動距離 (因為是負值移動，所以是 背景寬 - 螢幕寬)
+        const maxBgScroll = bgWidth - stageWidth;
+
+        // 計算主角目前的進度百分比 (0 ~ 1)
+        // 在陸地：0 是起點，stageWidth 是終點
+        // 在水下：0 是起點，stageWidth 是終點 (方向一樣是 X 軸)
+        let progress = state.charX / stageWidth;
+
+        // 限制 progress 在 0 ~ 1 之間 (避免破圖)
+        progress = Math.min(Math.max(progress, 0), 1);
+
+        // 計算背景應該移動多少
+        // 公式： 進度 * 最大可移動距離 * (-1)
+        return - (progress * maxBgScroll);
+    }
+
     function render() {
+        // 1. 處理主角
         const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
         el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
-        el.bg.style.transform = `translateX(${state.bgX}px)`;
 
+        // 2. 處理背景 (使用新的同步算法)
+        const bgX = getSyncedBgX();
+        el.bg.style.transform = `translateX(${bgX}px)`;
+
+        // 3. 處理動畫幀
         const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
         const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
@@ -267,21 +277,16 @@
             if (type === 'toWater') {
                 state.isWater = true;
                 state.charX = 0; 
-                state.bgX = 0; 
+                // 背景位置會由 render() 自動計算歸零
             } else {
                 state.isWater = false;
-                state.charX = window.innerWidth - 150; 
-                
-                // 🔴 修正回程的背景位置計算
-                // 必須等到 DOM 渲染出新的寬度後，才能算準
-                // 這裡我們強制重設背景為陸地，然後計算邊界
-                el.bg.style.backgroundImage = `url('${CONFIG.land.bg}')`;
-                const bgWidth = el.bg.offsetWidth;
-                state.bgX = window.innerWidth - bgWidth;
+                // 回到陸地時，把主角放在最右邊
+                state.charX = window.innerWidth; 
+                // render() 會自動把背景算到最右邊
             }
 
             updateSceneAssets();
-            render();
+            render(); // 強制更新一次畫面
 
         }, 1200);
 
@@ -292,7 +297,6 @@
     }
 
     window.addEventListener('resize', () => {
-        state.bgX = clampBackground(state.bgX);
         render();
     });
 
