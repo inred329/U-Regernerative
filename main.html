@@ -37,14 +37,12 @@
             max-width: none;
         }
 
-        /* === 懸浮動畫 === */
         @keyframes floating {
             0% { transform: translateY(0px) rotate(0deg); }
             50% { transform: translateY(-10px) rotate(2deg); }
             100% { transform: translateY(0px) rotate(0deg); }
         }
 
-        /* === 場景物件 === */
         .scene-obj {
             position: absolute;
             background-repeat: no-repeat;
@@ -64,7 +62,6 @@
         #obj1 { animation-duration: 3.5s; animation-delay: 0s; }
         #obj2 { animation-duration: 5s; animation-delay: 1.5s; }
 
-        /* === 主角層 === */
         #character {
             position: absolute;
             bottom: 10%;
@@ -78,7 +75,6 @@
             transition: width 0.1s, height 0.1s;
         }
 
-        /* === 轉場波浪層 === */
         #transition-wave {
             position: fixed;
             left: 0;
@@ -98,7 +94,7 @@
         }
 
         /* =========================================
-           🔴 卡片系統樣式 (背景透明 + 水平堆疊)
+           🔴 卡片系統樣式 (高度對齊版)
            ========================================= */
         #card-system {
             position: fixed;
@@ -114,7 +110,7 @@
             
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: center; /* 這會讓左右兩邊垂直置中對齊 */
             
             opacity: 0;
             pointer-events: none;
@@ -128,8 +124,9 @@
 
         .card-content-wrapper {
             display: flex;
-            gap: 100px; /* 左右區塊距離加大，避免卡片撞在一起 */
-            align-items: center;
+            /* 🔴 加大間距，因為右邊卡片會往右橫移，避免蓋住左邊 */
+            gap: 120px; 
+            align-items: flex-start; /* 讓它們頂部對齊 (如果高度一樣，這行沒差，但比較保險) */
             
             transform: scale(0.9);
             opacity: 0;
@@ -141,32 +138,24 @@
             opacity: 1;
         }
 
-        /* 左側：單張介紹卡 */
-        .card-left-section {
+        /* 🔴 統一設定：左右兩邊的尺寸完全一樣 */
+        .card-left-section, .card-right-section {
+            /* 這裡設定您想要的卡片尺寸 */
             width: 350px;
-            height: 525px;
-            perspective: 1000px;
+            height: 525px; 
+            position: relative; /* 為了讓內部絕對定位生效 */
         }
 
+        /* 左側圖片 */
         .card-left-img {
             width: 100%;
             height: 100%;
-            /* 🔴 改成透明背景，移除邊框 */
             background-color: transparent;
-            border-radius: 0; 
-            /* 如果卡片本身有不規則形狀，可以用 drop-shadow 替代 box-shadow */
+            object-fit: contain; /* 保持圖片比例，不裁切 */
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-            box-shadow: none; 
-            object-fit: contain;
         }
 
-        /* 右側：堆疊卡片區 */
-        .card-right-section {
-            position: relative;
-            width: 350px;
-            height: 525px;
-        }
-
+        /* 右側堆疊圖片 */
         .card-stack-img {
             position: absolute;
             top: 0;
@@ -177,49 +166,40 @@
             transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.5s, z-index 0s;
             object-fit: contain;
             
-            /* 🔴 改成透明背景 */
             background-color: transparent;
-            border-radius: 0;
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
-            box-shadow: none;
         }
 
-        /* 🔴 核心修改：純水平堆疊邏輯 
-           如果您想修改「水平位移」的大小，請修改 translateX 的數值
-        */
+        /* 🔴 純水平堆疊設定 */
         
-        /* 第一張 (最前) */
+        /* 第一張 (最前) - 100% 大小，跟左邊那張一樣高 */
         .card-stack-img[data-layer="1"] {
             z-index: 3;
-            /* 不位移 */
             transform: translateX(0px) scale(1);
             filter: brightness(1);
         }
         
-        /* 第二張 (中) - 想要位移更大，把 80px 改成 100px 或更多 */
+        /* 第二張 (中) - 往右移，稍微縮小 */
         .card-stack-img[data-layer="2"] {
             z-index: 2;
-            /* 🔴 只移動 X 軸 (水平)，Y 軸保持 0 */
-            transform: translateX(80px) scale(0.95); 
+            transform: translateX(100px) scale(0.95); 
             filter: brightness(0.6); 
         }
         
-        /* 第三張 (後) - 必須比第二張大 (例如 80*2 = 160) */
+        /* 第三張 (後) - 再往右移 */
         .card-stack-img[data-layer="3"] {
             z-index: 1;
-            /* 🔴 只移動 X 軸 (水平) */
-            transform: translateX(160px) scale(0.9);
+            transform: translateX(200px) scale(0.9);
             filter: brightness(0.4);
         }
 
-        /* 手機版適配 */
         @media (max-width: 900px) {
             .card-content-wrapper {
                 flex-direction: column;
-                gap: 30px;
+                align-items: center; /* 手機版改回置中 */
+                gap: 50px;
                 transform: scale(0.65) !important;
             }
-            
             #card-system.show .card-content-wrapper {
                 transform: scale(0.75) !important;
             }
@@ -267,18 +247,8 @@
             pathPrefix: 'svgs/Walk_man_',
             ext: '.svg',
             objects: [
-                { 
-                    id: 'fern', 
-                    src: 'images/fern.png', 
-                    w: '150px', h: '150px', 
-                    left: '5%', bottom: '40%' 
-                },
-                { 
-                    id: 'flower',
-                    src: 'images/flower.png', 
-                    w: '150px', h: '150px', 
-                    left: '40%', bottom: '10%' 
-                }
+                { id: 'fern', src: 'images/fern.png', w: '150px', h: '150px', left: '5%', bottom: '40%' },
+                { id: 'flower', src: 'images/flower.png', w: '150px', h: '150px', left: '40%', bottom: '10%' }
             ]
         },
         water: {
@@ -288,18 +258,8 @@
             pathPrefix: 'svgs/Swim_man_',
             ext: '.svg',
             objects: [
-                { 
-                    id: 'jellyfish',
-                    src: 'images/jellyfish.png', 
-                    w: '150px', h: '150px', 
-                    left: '40%', bottom: '50%' 
-                },
-                { 
-                    id: 'fish',
-                    src: 'images/fish.png', 
-                    w: '200px', h: '200px', 
-                    left: '70%', bottom: '70%' 
-                }
+                { id: 'jellyfish', src: 'images/jellyfish.png', w: '150px', h: '150px', left: '40%', bottom: '50%' },
+                { id: 'fish', src: 'images/fish.png', w: '200px', h: '200px', left: '70%', bottom: '70%' }
             ]
         }
     };
@@ -334,7 +294,6 @@
 
     function setupObjectInteractions() {
         const objects = [el.obj1, el.obj2];
-
         objects.forEach(obj => {
             obj.addEventListener('mouseenter', () => {
                 let currentBg = obj.style.backgroundImage;
@@ -343,7 +302,6 @@
                     obj.style.backgroundImage = newBg;
                 }
             });
-
             obj.addEventListener('mouseleave', () => {
                 let currentBg = obj.style.backgroundImage;
                 if (currentBg && currentBg.indexOf('-glow') !== -1) {
@@ -351,7 +309,6 @@
                     obj.style.backgroundImage = newBg;
                 }
             });
-
             obj.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const conf = state.isWater ? CONFIG.water : CONFIG.land;
@@ -370,7 +327,6 @@
                 }
             });
         });
-
         el.cardSystem.addEventListener('click', () => {
             closeCards();
         });
@@ -395,7 +351,6 @@
         const layer1 = document.querySelector('.card-stack-img[data-layer="1"]');
         const layer2 = document.querySelector('.card-stack-img[data-layer="2"]');
         const layer3 = document.querySelector('.card-stack-img[data-layer="3"]');
-        
         const currentLayer = clickedCard.getAttribute('data-layer');
 
         if (currentLayer === "2") {
@@ -411,10 +366,8 @@
 
     window.addEventListener('wheel', (e) => {
         if (state.isLocked) return; 
-
         const moveDirection = e.deltaY > 0 ? 1 : -1;
         const speed = 8; 
-
         state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
@@ -439,7 +392,6 @@
                 triggerTransition('toLand');
             }
         }
-
         render();
     });
 
@@ -456,10 +408,8 @@
     function render() {
         const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
         el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
-
         const bgX = getSyncedBgX();
         el.scrollingLayer.style.transform = `translateX(${bgX}px)`;
-
         const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
         const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
@@ -470,18 +420,14 @@
         el.char.style.width = conf.dims.w;
         el.char.style.height = conf.dims.h;
         state.frameIndex = 1;
-
         el.bgImg.src = conf.bg;
-
         const o1 = conf.objects[0];
         const o2 = conf.objects[1];
-
         el.obj1.style.backgroundImage = `url('${o1.src}')`;
         el.obj1.style.width = o1.w;
         el.obj1.style.height = o1.h;
         el.obj1.style.left = o1.left;
         el.obj1.style.bottom = o1.bottom;
-
         el.obj2.style.backgroundImage = `url('${o2.src}')`;
         el.obj2.style.width = o2.w;
         el.obj2.style.height = o2.h;
@@ -493,7 +439,6 @@
         if (state.isLocked) return;
         state.isLocked = true;
         el.wave.classList.add('active');
-
         setTimeout(() => {
             if (type === 'toWater') {
                 state.isWater = true;
@@ -502,23 +447,17 @@
                 state.isWater = false;
                 state.charX = window.innerWidth; 
             }
-
             updateSceneAssets();
             el.bgImg.onload = () => { render(); };
             render();
-
         }, 1200);
-
         setTimeout(() => {
             el.wave.classList.remove('active');
             state.isLocked = false;
         }, 2500);
     }
 
-    window.addEventListener('resize', () => {
-        render();
-    });
-
+    window.addEventListener('resize', () => { render(); });
     init();
 
 </script>
