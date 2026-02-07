@@ -27,12 +27,18 @@
             top: 0;
             left: 0;
             
-            /* 設定背景比螢幕寬，讓它有捲動空間 */
-            width: 160vw; 
+            /* 🔴 修正 1：加大容器寬度，確保放得下長圖 */
+            /* 如果您的圖非常長，這裡可以設更大，例如 300vw 或 4000px */
+            width: 3300px; 
             height: 100%;
             
             background-image: url('images/green1.png');
-            background-size: cover; 
+            
+            /* 🔴 修正 2：改用 auto 100% */
+            /* 讓高度永遠是 100% (頂天立地)，寬度自動依照圖片比例延伸 */
+            /* 這樣就絕對不會有任何裁切 */
+            background-size: auto 100%; 
+            
             background-position: left center; 
             background-repeat: no-repeat;
             
@@ -40,29 +46,18 @@
             will-change: transform; 
         }
 
-        /* === 新增：場景物件樣式 (花草、魚) === */
-        /* 這些物件是放在 #background 裡面，所以會跟著背景一起動 */
+        /* === 場景物件樣式 === */
         .scene-obj {
             position: absolute;
             background-repeat: no-repeat;
             background-size: contain;
             background-position: center;
-            z-index: 2; /* 在背景(1)之上，但在主角(10)之下 */
-            transition: opacity 0.3s; /* 切換時淡入淡出 */
+            z-index: 2; 
+            transition: opacity 0.3s;
         }
 
-        /* 物件 1 (左邊那個) */
-        .obj-1 {
-            /* 預設大小與位置，會由 JS 覆蓋 */
-            width: 150px;
-            height: 150px;
-        }
-
-        /* 物件 2 (右邊那個) */
-        .obj-2 {
-            width: 150px;
-            height: 150px;
-        }
+        .obj-1 { width: 150px; height: 150px; }
+        .obj-2 { width: 150px; height: 150px; }
 
         /* === 主角層 === */
         #character {
@@ -106,15 +101,11 @@
         <div class="scene-obj obj-1" id="obj1"></div>
         <div class="scene-obj obj-2" id="obj2"></div>
     </div>
-    
     <div id="character"></div>
     <div id="transition-wave"></div>
 </div>
 
 <script>
-    // ==========================================
-    // 1. 設定檔 (CONFIG) - 加入了 objects 設定
-    // ==========================================
     const CONFIG = {
         land: {
             bg: 'images/green1.png',
@@ -122,17 +113,16 @@
             frames: 6,
             pathPrefix: 'svgs/Walk_man_',
             ext: '.svg',
-            // 🔴 陸地物件設定 (Fern & Flower)
             objects: [
                 { 
                     src: 'images/fern.png', 
                     w: '200px', h: '200px', 
-                    left: '15%', bottom: '10%' // 在背景圖的 15% 處 (偏左)
+                    left: '15%', bottom: '10%' 
                 },
                 { 
                     src: 'images/flower.png', 
                     w: '150px', h: '150px', 
-                    left: '75%', bottom: '12%' // 在背景圖的 75% 處 (偏右)
+                    left: '75%', bottom: '12%' 
                 }
             ]
         },
@@ -142,17 +132,16 @@
             frames: 7,
             pathPrefix: 'svgs/Swim_man_',
             ext: '.svg',
-            // 🔴 水下物件設定 (Jellyfish & Fish)
             objects: [
                 { 
                     src: 'images/jellyfish.png', 
                     w: '160px', h: '180px', 
-                    left: '25%', bottom: '45%' // 水母通常漂浮得比較高 (bottom 45%)
+                    left: '25%', bottom: '45%' 
                 },
                 { 
                     src: 'images/fish.png', 
                     w: '180px', h: '120px', 
-                    left: '80%', bottom: '60%' // 魚群在右上方游動
+                    left: '80%', bottom: '60%' 
                 }
             ]
         }
@@ -171,13 +160,12 @@
         char: document.getElementById('character'),
         bg: document.getElementById('background'),
         wave: document.getElementById('transition-wave'),
-        // 🔴 抓取新物件
         obj1: document.getElementById('obj1'),
         obj2: document.getElementById('obj2')
     };
 
     function init() {
-        updateSceneAssets(); // 統一更新外觀函數
+        updateSceneAssets();
         render();
     }
 
@@ -196,10 +184,8 @@
         const speed = 8; 
 
         state.direction = moveDirection;
-
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
-        // 角色邊界限制
         if (!state.isWater) {
             if (nextCharX < 0) nextCharX = 0;
         } else {
@@ -212,6 +198,8 @@
 
             let nextBgX = state.bgX;
             if (moveDirection === 1) {
+                // 🔴 調整：如果背景圖很長，可以把 0.3 改大一點 (例如 0.5)
+                // 這樣捲動速度會變快，比較容易看到圖片的尾端
                 nextBgX -= speed * 0.3; 
             } else {
                 nextBgX += speed * 0.3; 
@@ -221,7 +209,6 @@
             state.frameIndex += 0.25; 
         }
 
-        // 檢查轉場
         if (moveDirection === 1) {
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
@@ -245,30 +232,24 @@
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
     }
 
-    // 🔴 核心修改：統一管理所有外觀更新 (背景、主角、物件)
     function updateSceneAssets() {
         const conf = state.isWater ? CONFIG.water : CONFIG.land;
         
-        // 1. 更新主角
         el.char.style.width = conf.dims.w;
         el.char.style.height = conf.dims.h;
         state.frameIndex = 1;
 
-        // 2. 更新背景
         el.bg.style.backgroundImage = `url('${conf.bg}')`;
 
-        // 3. 更新場景物件 (Fern/Flower 或 Jellyfish/Fish)
         const o1 = conf.objects[0];
         const o2 = conf.objects[1];
 
-        // 設定物件 1
         el.obj1.style.backgroundImage = `url('${o1.src}')`;
         el.obj1.style.width = o1.w;
         el.obj1.style.height = o1.h;
         el.obj1.style.left = o1.left;
         el.obj1.style.bottom = o1.bottom;
 
-        // 設定物件 2
         el.obj2.style.backgroundImage = `url('${o2.src}')`;
         el.obj2.style.width = o2.w;
         el.obj2.style.height = o2.h;
@@ -290,11 +271,15 @@
             } else {
                 state.isWater = false;
                 state.charX = window.innerWidth - 150; 
+                
+                // 🔴 修正回程的背景位置計算
+                // 必須等到 DOM 渲染出新的寬度後，才能算準
+                // 這裡我們強制重設背景為陸地，然後計算邊界
+                el.bg.style.backgroundImage = `url('${CONFIG.land.bg}')`;
                 const bgWidth = el.bg.offsetWidth;
                 state.bgX = window.innerWidth - bgWidth;
             }
 
-            // 執行變身 (現在包含物件切換)
             updateSceneAssets();
             render();
 
