@@ -21,20 +21,50 @@
             overflow: hidden;
         }
 
+        /* === 背景層 === */
         #background {
             position: fixed;
             top: 0;
             left: 0;
+            
+            /* 設定背景比螢幕寬，讓它有捲動空間 */
             width: 160vw; 
             height: 100%;
+            
             background-image: url('images/green1.png');
             background-size: cover; 
-            background-position: left center;
+            background-position: left center; 
             background-repeat: no-repeat;
+            
             z-index: 1;
             will-change: transform; 
         }
 
+        /* === 新增：場景物件樣式 (花草、魚) === */
+        /* 這些物件是放在 #background 裡面，所以會跟著背景一起動 */
+        .scene-obj {
+            position: absolute;
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+            z-index: 2; /* 在背景(1)之上，但在主角(10)之下 */
+            transition: opacity 0.3s; /* 切換時淡入淡出 */
+        }
+
+        /* 物件 1 (左邊那個) */
+        .obj-1 {
+            /* 預設大小與位置，會由 JS 覆蓋 */
+            width: 150px;
+            height: 150px;
+        }
+
+        /* 物件 2 (右邊那個) */
+        .obj-2 {
+            width: 150px;
+            height: 150px;
+        }
+
+        /* === 主角層 === */
         #character {
             position: absolute;
             bottom: 10%;
@@ -48,6 +78,7 @@
             transition: width 0.1s, height 0.1s;
         }
 
+        /* === 轉場波浪層 === */
         #transition-wave {
             position: fixed;
             left: 0;
@@ -71,26 +102,59 @@
 <body>
 
 <div id="game-stage">
-    <div id="background"></div>
+    <div id="background">
+        <div class="scene-obj obj-1" id="obj1"></div>
+        <div class="scene-obj obj-2" id="obj2"></div>
+    </div>
+    
     <div id="character"></div>
     <div id="transition-wave"></div>
 </div>
 
 <script>
+    // ==========================================
+    // 1. 設定檔 (CONFIG) - 加入了 objects 設定
+    // ==========================================
     const CONFIG = {
         land: {
             bg: 'images/green1.png',
             dims: { w: '109.6px', h: '180px' },
             frames: 6,
             pathPrefix: 'svgs/Walk_man_',
-            ext: '.svg'
+            ext: '.svg',
+            // 🔴 陸地物件設定 (Fern & Flower)
+            objects: [
+                { 
+                    src: 'images/fern.png', 
+                    w: '200px', h: '200px', 
+                    left: '15%', bottom: '10%' // 在背景圖的 15% 處 (偏左)
+                },
+                { 
+                    src: 'images/flower.png', 
+                    w: '150px', h: '150px', 
+                    left: '75%', bottom: '12%' // 在背景圖的 75% 處 (偏右)
+                }
+            ]
         },
         water: {
             bg: 'images/blue1.png',
             dims: { w: '225.2px', h: '181.3px' },
             frames: 7,
             pathPrefix: 'svgs/Swim_man_',
-            ext: '.svg'
+            ext: '.svg',
+            // 🔴 水下物件設定 (Jellyfish & Fish)
+            objects: [
+                { 
+                    src: 'images/jellyfish.png', 
+                    w: '160px', h: '180px', 
+                    left: '25%', bottom: '45%' // 水母通常漂浮得比較高 (bottom 45%)
+                },
+                { 
+                    src: 'images/fish.png', 
+                    w: '180px', h: '120px', 
+                    left: '80%', bottom: '60%' // 魚群在右上方游動
+                }
+            ]
         }
     };
 
@@ -106,11 +170,14 @@
     const el = {
         char: document.getElementById('character'),
         bg: document.getElementById('background'),
-        wave: document.getElementById('transition-wave')
+        wave: document.getElementById('transition-wave'),
+        // 🔴 抓取新物件
+        obj1: document.getElementById('obj1'),
+        obj2: document.getElementById('obj2')
     };
 
     function init() {
-        updateCharacterAppearance();
+        updateSceneAssets(); // 統一更新外觀函數
         render();
     }
 
@@ -130,31 +197,19 @@
 
         state.direction = moveDirection;
 
-        // 1. 計算「預想」的下一步位置
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
-        // 🔴 關鍵修正：角色邊界限制 (隱形牆)
+        // 角色邊界限制
         if (!state.isWater) {
-            // === 陸地模式 ===
-            // 左邊有牆 (不能小於 0)
             if (nextCharX < 0) nextCharX = 0;
-            // 右邊沒牆 (允許大於螢幕寬，因為要觸發轉場)
         } else {
-            // === 水下模式 ===
-            // 左邊沒牆 (允許小於 0，因為要觸發轉場)
-            // 右邊有牆 (不能超出螢幕右邊緣)
-            // 計算右邊界：螢幕寬度 - 主角當下的寬度
             const maxRight = window.innerWidth - el.char.offsetWidth;
             if (nextCharX > maxRight) nextCharX = maxRight;
         }
 
-        // 只有當位置真的有改變時 (沒撞牆)，才更新狀態
         if (nextCharX !== state.charX) {
-            
-            // 更新主角位置
             state.charX = nextCharX;
 
-            // 更新背景位置 (只有人動的時候，背景才跟著動)
             let nextBgX = state.bgX;
             if (moveDirection === 1) {
                 nextBgX -= speed * 0.3; 
@@ -163,18 +218,15 @@
             }
             state.bgX = clampBackground(nextBgX);
 
-            // 更新動畫幀
             state.frameIndex += 0.25; 
         }
 
-        // 檢查轉場觸發條件
+        // 檢查轉場
         if (moveDirection === 1) {
-            // 向右走且在陸地 -> 觸發下水
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
             }
         } else {
-            // 向左走且在水下 -> 觸發上岸
             if (state.isWater && state.charX < -50) { 
                 triggerTransition('toLand');
             }
@@ -193,12 +245,35 @@
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
     }
 
-    function updateCharacterAppearance() {
+    // 🔴 核心修改：統一管理所有外觀更新 (背景、主角、物件)
+    function updateSceneAssets() {
         const conf = state.isWater ? CONFIG.water : CONFIG.land;
+        
+        // 1. 更新主角
         el.char.style.width = conf.dims.w;
         el.char.style.height = conf.dims.h;
-        el.bg.style.backgroundImage = `url('${conf.bg}')`;
         state.frameIndex = 1;
+
+        // 2. 更新背景
+        el.bg.style.backgroundImage = `url('${conf.bg}')`;
+
+        // 3. 更新場景物件 (Fern/Flower 或 Jellyfish/Fish)
+        const o1 = conf.objects[0];
+        const o2 = conf.objects[1];
+
+        // 設定物件 1
+        el.obj1.style.backgroundImage = `url('${o1.src}')`;
+        el.obj1.style.width = o1.w;
+        el.obj1.style.height = o1.h;
+        el.obj1.style.left = o1.left;
+        el.obj1.style.bottom = o1.bottom;
+
+        // 設定物件 2
+        el.obj2.style.backgroundImage = `url('${o2.src}')`;
+        el.obj2.style.width = o2.w;
+        el.obj2.style.height = o2.h;
+        el.obj2.style.left = o2.left;
+        el.obj2.style.bottom = o2.bottom;
     }
 
     function triggerTransition(type) {
@@ -219,7 +294,8 @@
                 state.bgX = window.innerWidth - bgWidth;
             }
 
-            updateCharacterAppearance();
+            // 執行變身 (現在包含物件切換)
+            updateSceneAssets();
             render();
 
         }, 1200);
