@@ -37,18 +37,11 @@
             max-width: none;
         }
 
-        /* === 🔴 新增：定義懸浮動畫 === */
+        /* === 懸浮動畫 === */
         @keyframes floating {
-            0% {
-                transform: translateY(0px) rotate(0deg);
-            }
-            50% {
-                /* 稍微往上浮動 10px，並輕微旋轉 2度 */
-                transform: translateY(-10px) rotate(2deg);
-            }
-            100% {
-                transform: translateY(0px) rotate(0deg);
-            }
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
         }
 
         /* === 場景物件 === */
@@ -59,20 +52,28 @@
             background-position: center;
             z-index: 2;
             transition: opacity 0.3s;
-
-            /* 🔴 套用動畫：預設 4秒，無限循環，緩進緩出 */
+            
+            /* 套用動畫 */
             animation: floating 4s ease-in-out infinite;
+            
+            /* 🔴 新增：滑鼠變成手指，提示可互動 */
+            cursor: pointer;
         }
 
-        /* 🔴 讓兩個物件的頻率不一樣，看起來比較自然 */
+        /* 🔴 新增：當滑鼠懸停時，暫停動畫 */
+        .scene-obj:hover {
+            animation-play-state: paused;
+        }
+
+        /* 物件個別設定 */
         #obj1 {
-            animation-duration: 3.5s; /* 比較快一點 */
-            animation-delay: 0s;      /* 立即開始 */
+            animation-duration: 3.5s;
+            animation-delay: 0s;
         }
 
         #obj2 {
-            animation-duration: 5s;   /* 比較慢一點 */
-            animation-delay: 1.5s;    /* 延遲 1.5秒才開始 (錯開時間) */
+            animation-duration: 5s;
+            animation-delay: 1.5s;
         }
 
         /* === 主角層 === */
@@ -189,7 +190,45 @@
             render();
         };
         updateSceneAssets();
+        
+        // 🔴 初始化互動事件
+        setupObjectInteractions();
+        
         render();
+    }
+
+    // 🔴 新增：設定物件的互動邏輯
+    function setupObjectInteractions() {
+        // 選取這兩個物件元素
+        const objects = [el.obj1, el.obj2];
+
+        objects.forEach(obj => {
+            // 1. 滑鼠進入：換成 Glow 圖片
+            obj.addEventListener('mouseenter', () => {
+                // 取得目前的背景圖片網址字串，例如 url("images/fern.png")
+                let currentBg = obj.style.backgroundImage;
+                
+                // 確保目前不是已經發光的狀態
+                if (currentBg && currentBg.indexOf('-glow') === -1) {
+                    // 將 .png 替換成 -glow.png
+                    // 注意：這裡假設您的副檔名是 .png
+                    let newBg = currentBg.replace('.png', '-glow.png');
+                    obj.style.backgroundImage = newBg;
+                }
+            });
+
+            // 2. 滑鼠離開：換回原本圖片
+            obj.addEventListener('mouseleave', () => {
+                let currentBg = obj.style.backgroundImage;
+                
+                // 確保目前是發光狀態才切換回來
+                if (currentBg && currentBg.indexOf('-glow') !== -1) {
+                    // 將 -glow.png 替換回 .png
+                    let newBg = currentBg.replace('-glow.png', '.png');
+                    obj.style.backgroundImage = newBg;
+                }
+            });
+        });
     }
 
     window.addEventListener('wheel', (e) => {
@@ -201,7 +240,6 @@
         state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
 
-        // === 角色邊界限制 ===
         if (!state.isWater) {
             if (nextCharX < 0) nextCharX = 0;
         } else {
@@ -214,7 +252,6 @@
             state.frameIndex += 0.25; 
         }
 
-        // === 轉場觸發 ===
         if (moveDirection === 1) {
             if (!state.isWater && state.charX > window.innerWidth) {
                 triggerTransition('toWater');
@@ -231,14 +268,10 @@
     function getSyncedBgX() {
         const stageWidth = window.innerWidth;
         const bgWidth = el.bgImg.offsetWidth || stageWidth; 
-        
         if (bgWidth <= stageWidth) return 0;
-
         const maxBgScroll = bgWidth - stageWidth;
-
         let progress = state.charX / stageWidth;
         progress = Math.min(Math.max(progress, 0), 1);
-
         return - (progress * maxBgScroll);
     }
 
@@ -282,7 +315,6 @@
     function triggerTransition(type) {
         if (state.isLocked) return;
         state.isLocked = true;
-        
         el.wave.classList.add('active');
 
         setTimeout(() => {
