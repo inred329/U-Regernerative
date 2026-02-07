@@ -52,29 +52,17 @@
             background-position: center;
             z-index: 2;
             transition: opacity 0.3s;
-            
-            /* 套用動畫 */
             animation: floating 4s ease-in-out infinite;
-            
-            /* 🔴 新增：滑鼠變成手指，提示可互動 */
             cursor: pointer;
         }
 
-        /* 🔴 新增：當滑鼠懸停時，暫停動畫 */
         .scene-obj:hover {
             animation-play-state: paused;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
         }
 
-        /* 物件個別設定 */
-        #obj1 {
-            animation-duration: 3.5s;
-            animation-delay: 0s;
-        }
-
-        #obj2 {
-            animation-duration: 5s;
-            animation-delay: 1.5s;
-        }
+        #obj1 { animation-duration: 3.5s; animation-delay: 0s; }
+        #obj2 { animation-duration: 5s; animation-delay: 1.5s; }
 
         /* === 主角層 === */
         #character {
@@ -109,6 +97,122 @@
             top: -300%;
         }
 
+        /* =========================================
+           🔴 卡片系統樣式 (聚焦 + 模糊特效)
+           ========================================= */
+        #card-system {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2000;
+            
+            /* 🔴 關鍵 1：背景模糊特效 (毛玻璃) */
+            background-color: rgba(0, 0, 0, 0.6); /* 半透明黑底，讓背景變暗 */
+            backdrop-filter: blur(15px); /* 強力模糊背景 */
+            -webkit-backdrop-filter: blur(15px); /* Safari 支援 */
+            
+            /* 🔴 關鍵 2：Flexbox 絕對置中 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        #card-system.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 卡片內容容器 */
+        .card-content-wrapper {
+            display: flex;
+            gap: 60px;
+            align-items: center;
+            
+            /* 🔴 關鍵 3：彈出動畫 (Pop-up) */
+            transform: scale(0.9);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+        }
+
+        /* 當卡片系統顯示時，內容放大回正常尺寸 */
+        #card-system.show .card-content-wrapper {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* 左側：單張介紹卡 */
+        .card-left-section {
+            width: 350px;
+            height: 525px;
+            perspective: 1000px;
+        }
+
+        .card-left-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); /* 加深陰影，增加立體感 */
+            object-fit: contain;
+            background-color: #fff;
+        }
+
+        /* 右側：堆疊卡片區 */
+        .card-right-section {
+            position: relative;
+            width: 350px;
+            height: 525px;
+        }
+
+        .card-stack-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.5s, z-index 0s;
+            object-fit: contain;
+            background-color: #fff;
+        }
+
+        /* 堆疊邏輯 */
+        .card-stack-img[data-layer="1"] {
+            z-index: 3;
+            transform: translateX(0) translateY(0) scale(1);
+            filter: brightness(1);
+        }
+        .card-stack-img[data-layer="2"] {
+            z-index: 2;
+            transform: translateX(40px) translateY(40px) scale(0.95);
+            filter: brightness(0.6); /* 讓後面更暗一點，對比更強 */
+        }
+        .card-stack-img[data-layer="3"] {
+            z-index: 1;
+            transform: translateX(80px) translateY(80px) scale(0.9);
+            filter: brightness(0.4);
+        }
+
+        /* 手機版適配 */
+        @media (max-width: 900px) {
+            .card-content-wrapper {
+                flex-direction: column;
+                gap: 30px;
+                transform: scale(0.65) !important; /* 強制縮小 */
+            }
+            
+            #card-system.show .card-content-wrapper {
+                transform: scale(0.75) !important;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -117,13 +221,29 @@
     
     <div id="scrolling-layer">
         <img id="bg-img" src="images/green1.png" alt="Background">
-        
         <div class="scene-obj" id="obj1"></div>
         <div class="scene-obj" id="obj2"></div>
     </div>
 
     <div id="character"></div>
     <div id="transition-wave"></div>
+
+    <div id="card-system">
+        <div class="card-content-wrapper">
+            
+            <div class="card-left-section">
+                <img id="card-left-display" class="card-left-img" src="" alt="Intro Card">
+            </div>
+
+            <div class="card-right-section">
+                <img class="card-stack-img" data-layer="1" data-index="1" src="" alt="Card 1">
+                <img class="card-stack-img" data-layer="2" data-index="2" src="" alt="Card 2">
+                <img class="card-stack-img" data-layer="3" data-index="3" src="" alt="Card 3">
+            </div>
+
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -136,11 +256,13 @@
             ext: '.svg',
             objects: [
                 { 
+                    id: 'fern', 
                     src: 'images/fern.png', 
                     w: '150px', h: '150px', 
                     left: '5%', bottom: '40%' 
                 },
                 { 
+                    id: 'flower',
                     src: 'images/flower.png', 
                     w: '150px', h: '150px', 
                     left: '40%', bottom: '10%' 
@@ -155,11 +277,13 @@
             ext: '.svg',
             objects: [
                 { 
+                    id: 'jellyfish',
                     src: 'images/jellyfish.png', 
                     w: '150px', h: '150px', 
                     left: '40%', bottom: '50%' 
                 },
                 { 
+                    id: 'fish',
                     src: 'images/fish.png', 
                     w: '200px', h: '200px', 
                     left: '70%', bottom: '70%' 
@@ -182,57 +306,102 @@
         bgImg: document.getElementById('bg-img'),
         wave: document.getElementById('transition-wave'),
         obj1: document.getElementById('obj1'),
-        obj2: document.getElementById('obj2')
+        obj2: document.getElementById('obj2'),
+        cardSystem: document.getElementById('card-system'),
+        cardLeft: document.getElementById('card-left-display'),
+        stackCards: document.querySelectorAll('.card-stack-img')
     };
 
     function init() {
-        el.bgImg.onload = () => {
-            render();
-        };
+        el.bgImg.onload = () => { render(); };
         updateSceneAssets();
-        
-        // 🔴 初始化互動事件
         setupObjectInteractions();
-        
+        setupCardSystem();
         render();
     }
 
-    // 🔴 新增：設定物件的互動邏輯
     function setupObjectInteractions() {
-        // 選取這兩個物件元素
         const objects = [el.obj1, el.obj2];
 
         objects.forEach(obj => {
-            // 1. 滑鼠進入：換成 Glow 圖片
             obj.addEventListener('mouseenter', () => {
-                // 取得目前的背景圖片網址字串，例如 url("images/fern.png")
                 let currentBg = obj.style.backgroundImage;
-                
-                // 確保目前不是已經發光的狀態
                 if (currentBg && currentBg.indexOf('-glow') === -1) {
-                    // 將 .png 替換成 -glow.png
-                    // 注意：這裡假設您的副檔名是 .png
                     let newBg = currentBg.replace('.png', '-glow.png');
                     obj.style.backgroundImage = newBg;
                 }
             });
 
-            // 2. 滑鼠離開：換回原本圖片
             obj.addEventListener('mouseleave', () => {
                 let currentBg = obj.style.backgroundImage;
-                
-                // 確保目前是發光狀態才切換回來
                 if (currentBg && currentBg.indexOf('-glow') !== -1) {
-                    // 將 -glow.png 替換回 .png
                     let newBg = currentBg.replace('-glow.png', '.png');
                     obj.style.backgroundImage = newBg;
                 }
             });
+
+            obj.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const conf = state.isWater ? CONFIG.water : CONFIG.land;
+                const objData = (obj === el.obj1) ? conf.objects[0] : conf.objects[1];
+                openCards(objData.id);
+            });
         });
     }
 
+    function setupCardSystem() {
+        el.stackCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (card.getAttribute('data-layer') !== "1") {
+                    rotateStack(card);
+                }
+            });
+        });
+
+        el.cardSystem.addEventListener('click', () => {
+            closeCards();
+        });
+    }
+
+    function openCards(objectId) {
+        state.isLocked = true;
+        
+        el.cardLeft.src = `images/${objectId}_card_left.png`;
+
+        el.stackCards.forEach((card, index) => {
+            card.src = `images/${objectId}_card_${index + 1}.png`;
+            card.setAttribute('data-layer', index + 1);
+        });
+
+        el.cardSystem.classList.add('show');
+    }
+
+    function closeCards() {
+        state.isLocked = false;
+        el.cardSystem.classList.remove('show');
+    }
+
+    function rotateStack(clickedCard) {
+        const layer1 = document.querySelector('.card-stack-img[data-layer="1"]');
+        const layer2 = document.querySelector('.card-stack-img[data-layer="2"]');
+        const layer3 = document.querySelector('.card-stack-img[data-layer="3"]');
+        
+        const currentLayer = clickedCard.getAttribute('data-layer');
+
+        if (currentLayer === "2") {
+            clickedCard.setAttribute('data-layer', 1);
+            layer1.setAttribute('data-layer', 3);
+            layer3.setAttribute('data-layer', 2);
+        } else if (currentLayer === "3") {
+            clickedCard.setAttribute('data-layer', 1);
+            layer1.setAttribute('data-layer', 2);
+            layer2.setAttribute('data-layer', 3);
+        }
+    }
+
     window.addEventListener('wheel', (e) => {
-        if (state.isLocked) return;
+        if (state.isLocked) return; 
 
         const moveDirection = e.deltaY > 0 ? 1 : -1;
         const speed = 8; 
