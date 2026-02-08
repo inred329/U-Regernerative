@@ -46,7 +46,7 @@
         #card-system.show { opacity: 1; pointer-events: auto; }
 
         .card-content-wrapper {
-            display: flex; gap: 100px; align-items: flex-start;
+            display: flex; gap: 50px; align-items: flex-start;
             transform: scale(0.9); opacity: 0; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
         }
         #card-system.show .card-content-wrapper { transform: scale(1); opacity: 1; }
@@ -60,12 +60,9 @@
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); cursor: default;
         }
 
-        /* 右側堆疊卡片容器 */
         .card-stack-wrapper {
             position: absolute; top: 0; left: 0; width: 100%; 
-            /* 這裡很重要，因為按鈕是 absolute，父容器要是 relative (或 absolute) */
-            height: 525px; /* 這裡要跟圖片一樣高，才能定位準確 */
-            
+            height: 525px; 
             display: flex; flex-direction: column; align-items: center; cursor: pointer;
             transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0s;
         }
@@ -75,24 +72,24 @@
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: filter 0.5s;
         }
 
-        /* 🔴 修改：Read More 按鈕樣式 (重疊版) */
+        /* 🔴 修改：Read More 按鈕樣式 (靠左對齊 + 縮小) */
         .read-more-btn {
-            position: absolute; /* 絕對定位，脫離文件流 */
-            bottom: 20px;       /* 距離底部 20px */
-            left: 50%;          /* 水平置中 */
-            transform: translateX(-50%); /* 修正置中偏移 */
+            position: absolute;
+            bottom: 35px;       /* 距離底部稍微高一點 */
             
-            width: 200px;       /* 按鈕寬度 */
+            left: 35px;         /* 🔴 靠左對齊 (這個數值可以根據卡片文字邊距微調) */
+            /* transform: translateX(-50%);  <-- 🔴 移除這行 (不再置中) */
+            
+            width: 80px;        /* 🔴 寬度設為 80px (原本 200px 的 40%) */
             height: auto;
             cursor: pointer;
-            z-index: 10;        /* 確保在卡片圖片上面 */
+            z-index: 10;
             
             transition: transform 0.2s ease, opacity 0.3s ease;
         }
         
-        /* Hover 時放大一點點，注意要保留 translateX(-50%) */
         .read-more-btn:hover { 
-            transform: translateX(-50%) scale(1.05); 
+            transform: scale(1.1); /* 🔴 Hover 時只放大，不位移 */
         }
         
         .hidden { display: none !important; opacity: 0; }
@@ -201,7 +198,7 @@
     };
 
     function preloadAllAssets() {
-        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/READ_MORE.png']; // 🔴 更新路徑
+        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/READ_MORE.png'];
 
         for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
         for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
@@ -285,7 +282,6 @@
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
         
-        // 按鈕點擊事件 (可跳轉)
         el.readMoreBtn.addEventListener('click', (e) => {
              e.stopPropagation();
              console.log('Fern Read More Clicked!');
