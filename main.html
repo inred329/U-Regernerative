@@ -80,7 +80,7 @@
         }
 
         /* =========================================
-           🔴 通用燈箱樣式 (Modal 1 & Modal 2 共用)
+           通用燈箱樣式
            ========================================= */
         .fullscreen-modal {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 3000;
@@ -90,31 +90,33 @@
         }
         .fullscreen-modal.show { opacity: 1; pointer-events: auto; }
 
-        /* 內容容器 (圖片+按鈕) */
         .modal-inner-wrapper {
             position: relative; display: inline-block; max-width: 100vw; max-height: 100vh; transition: width 0.3s ease;
         }
 
-        /* 圖片樣式 */
         .modal-content-img {
             display: block; height: 95vh; width: auto; object-fit: contain; cursor: zoom-in; box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
-        /* 放大狀態 (Zoomed) */
         .fullscreen-modal.zoomed { display: block; overflow-y: auto; text-align: center; }
         .fullscreen-modal.zoomed .modal-inner-wrapper { display: inline-block; width: 100vw; max-width: none; max-height: none; }
         .fullscreen-modal.zoomed .modal-content-img { width: 100vw; height: auto; cursor: zoom-out; }
 
-        /* 互動按鈕 */
         .modal-interactive-btn {
             position: absolute; z-index: 20; cursor: pointer; transition: transform 0.2s;
         }
         .modal-interactive-btn:hover { transform: scale(1.05); }
         .modal-interactive-btn.playing { filter: drop-shadow(0 0 10px #00ff00); }
 
-        /* 按鈕位置 */
-        #btn-play-music { bottom: 6%; left: 8%; width: 20%; }
-        #btn-gain-points { bottom: 6%; right: 8%; width: 25%; }
+        /* 🔴 修改：兩個播放按鈕共用同一個樣式 (左下角) */
+        #btn-play-music, #btn-play-music-2 { 
+            bottom: 6%; left: 8%; width: 20%; 
+        }
+        
+        /* Gain Points 按鈕 (右下角) */
+        #btn-gain-points { 
+            bottom: 6%; right: 8%; width: 25%; 
+        }
 
     </style>
 </head>
@@ -165,6 +167,7 @@
     <div id="gain-points-modal" class="fullscreen-modal">
         <div class="modal-inner-wrapper">
             <img id="gain-points-content" class="modal-content-img" src="images/text_long.png" alt="Long Content">
+            <img id="btn-play-music-2" class="modal-interactive-btn" src="images/PLAY_MUSIC.png" alt="Play Music 2">
         </div>
     </div>
 </div>
@@ -224,9 +227,11 @@
         btnPlayMusic: document.getElementById('btn-play-music'),
         btnGainPoints: document.getElementById('btn-gain-points'),
         
-        // 🔴 燈箱 2 (新增)
+        // 燈箱 2
         modal2: document.getElementById('gain-points-modal'),
         modal2Img: document.getElementById('gain-points-content'),
+        // 🔴 新增：第二個播放按鈕參考
+        btnPlayMusic2: document.getElementById('btn-play-music-2'),
 
         bgMusic: new Audio('wavs/Green Cloud Forest - Project - Curiosity of Nature 1.wav')
     };
@@ -236,7 +241,7 @@
             'images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 
             'images/READ_MORE.png', 
             'images/text_short.png',
-            'images/text_long.png', // 🔴 預載 text_long.png
+            'images/text_long.png', 
             'images/PLAY_MUSIC.png', 
             'images/GAIN_POINTS.png'
         ];
@@ -283,7 +288,7 @@
         updateSceneAssets();
         setupObjectInteractions();
         setupCardSystem();
-        setupModals(); // 統一管理燈箱邏輯
+        setupModals(); 
         render();
         setTimeout(() => { state.isLocked = false; }, 500);
     }
@@ -314,7 +319,6 @@
         });
     }
 
-    // 🔴 統一管理所有燈箱邏輯
     function setupModals() {
         // === 燈箱 1 (Short Text) ===
         el.modalImg.addEventListener('click', (e) => {
@@ -336,32 +340,23 @@
             el.btnPlayMusic.classList.remove('playing');
         });
 
-        // Play Music 按鈕
+        // 播放按鈕 1
         el.btnPlayMusic.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (el.bgMusic.paused) {
-                el.bgMusic.play().catch(e => console.log(e));
-                el.btnPlayMusic.classList.add('playing');
-            } else {
-                el.bgMusic.pause();
-                el.bgMusic.currentTime = 0; 
-                el.btnPlayMusic.classList.remove('playing');
-            }
+            toggleMusic(el.btnPlayMusic); // 呼叫共用播放函式
         });
 
-        // 🔴 Gain Points 按鈕 -> 切換到燈箱 2
+        // Gain Points 按鈕 -> 切換到燈箱 2
         el.btnGainPoints.addEventListener('click', (e) => {
             e.stopPropagation();
-            // 1. 關閉目前燈箱 1
             el.modal.classList.remove('show');
-            el.modal.classList.remove('zoomed'); // 重置縮放
+            el.modal.classList.remove('zoomed'); 
             
-            // 2. 停止音樂 (選擇性，換頁通常會停音樂)
+            // 切換時暫停音樂
             el.bgMusic.pause();
             el.bgMusic.currentTime = 0; 
             el.btnPlayMusic.classList.remove('playing');
 
-            // 3. 開啟燈箱 2
             el.modal2.classList.add('show');
         });
 
@@ -378,7 +373,30 @@
                 el.modal2.classList.remove('zoomed');
                 el.modal2.scrollTop = 0; 
             }, 300);
+
+            // 🔴 關閉燈箱 2 時也要停止音樂
+            el.bgMusic.pause();
+            el.bgMusic.currentTime = 0; 
+            el.btnPlayMusic2.classList.remove('playing');
         });
+
+        // 🔴 播放按鈕 2 (行為跟按鈕 1 一樣)
+        el.btnPlayMusic2.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMusic(el.btnPlayMusic2);
+        });
+    }
+
+    // 🔴 抽出共用的音樂切換邏輯
+    function toggleMusic(btnElement) {
+        if (el.bgMusic.paused) {
+            el.bgMusic.play().catch(e => console.log(e));
+            btnElement.classList.add('playing');
+        } else {
+            el.bgMusic.pause();
+            el.bgMusic.currentTime = 0; 
+            btnElement.classList.remove('playing');
+        }
     }
 
     function setupCardSystem() {
