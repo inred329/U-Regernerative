@@ -15,231 +15,129 @@
             font-family: sans-serif;
         }
 
-        /* =========================================
-           🔴 Loading 畫面樣式
-           ========================================= */
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #1a1a1a;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            transition: opacity 0.5s ease;
-        }
+        /* ... (省略 Loading 畫面樣式，保持不變) ... */
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #1a1a1a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity 0.5s ease; }
+        #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+        .loading-bar-container { width: 300px; height: 10px; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 20px; }
+        .loading-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.1s linear; }
+        .loading-text { font-size: 18px; letter-spacing: 2px; }
 
-        #loading-screen.fade-out {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .loading-bar-container {
-            width: 300px;
-            height: 10px;
-            background-color: #333;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 20px;
-        }
-
-        .loading-bar {
-            width: 0%;
-            height: 100%;
-            background-color: #4CAF50;
-            transition: width 0.1s linear;
-        }
-
-        .loading-text {
-            font-size: 18px;
-            letter-spacing: 2px;
-        }
-
-        /* =========================================
-           遊戲舞台
-           ========================================= */
-        #game-stage {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            opacity: 0; /* 預設隱藏，載入完再顯示 */
-            transition: opacity 0.5s ease;
-        }
-
-        #game-stage.ready {
-            opacity: 1;
-        }
-
-        #scrolling-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            will-change: transform;
-            z-index: 1;
-        }
-
-        #bg-img {
-            display: block;
-            height: 100%;
-            width: auto;
-            max-width: none;
-        }
-
-        @keyframes floating {
-            0% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(2deg); }
-            100% { transform: translateY(0px) rotate(0deg); }
-        }
-
-        .scene-obj {
-            position: absolute;
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center;
-            z-index: 2;
-            transition: opacity 0.3s;
-            animation: floating 4s ease-in-out infinite;
-            cursor: pointer;
-        }
-
-        .scene-obj:hover {
-            animation-play-state: paused;
-            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
-        }
-
+        /* ... (省略遊戲舞台基礎樣式，保持不變) ... */
+        #game-stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
+        #game-stage.ready { opacity: 1; }
+        #scrolling-layer { position: absolute; top: 0; left: 0; height: 100%; will-change: transform; z-index: 1; }
+        #bg-img { display: block; height: 100%; width: auto; max-width: none; }
+        @keyframes floating { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } 100% { transform: translateY(0px) rotate(0deg); } }
+        .scene-obj { position: absolute; background-repeat: no-repeat; background-size: contain; background-position: center; z-index: 2; transition: opacity 0.3s; animation: floating 4s ease-in-out infinite; cursor: pointer; }
+        .scene-obj:hover { animation-play-state: paused; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); }
         #obj1 { animation-duration: 3.5s; animation-delay: 0s; }
         #obj2 { animation-duration: 5s; animation-delay: 1.5s; }
+        #character { position: absolute; bottom: 10%; left: 0; z-index: 10; width: 109.6px; height: 180px; background-repeat: no-repeat; background-size: contain; background-position: center bottom; transition: width 0.1s, height 0.1s; }
+        #transition-wave { position: fixed; left: 0; width: 100%; z-index: 999; pointer-events: none; height: 400%; top: 100%; background-image: url('images/wave.png'); background-size: cover; background-position: top center; transition: top 1.5s ease-in-out; }
+        #transition-wave.active { top: -300%; }
 
-        #character {
-            position: absolute;
-            bottom: 10%;
-            left: 0;
-            z-index: 10;
-            width: 109.6px;
-            height: 180px;
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center bottom;
-            transition: width 0.1s, height 0.1s;
-        }
-
-        #transition-wave {
-            position: fixed;
-            left: 0;
-            width: 100%;
-            z-index: 999;
-            pointer-events: none;
-            height: 400%;
-            top: 100%;
-            background-image: url('images/wave.png');
-            background-size: cover;
-            background-position: top center;
-            transition: top 1.5s ease-in-out;
-        }
-
-        #transition-wave.active {
-            top: -300%;
-        }
-
-        /* 卡片系統 */
+        /* 卡片系統容器 */
         #card-system {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2000;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.4s ease;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000;
+            background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
         }
-
-        #card-system.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        #card-system.show { opacity: 1; pointer-events: auto; }
 
         .card-content-wrapper {
-            display: flex;
-            gap: 100px; 
-            align-items: flex-start;
-            transform: scale(0.9);
-            opacity: 0;
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+            display: flex; gap: 100px; align-items: flex-start;
+            transform: scale(0.9); opacity: 0; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
         }
+        #card-system.show .card-content-wrapper { transform: scale(1); opacity: 1; }
 
-        #card-system.show .card-content-wrapper {
-            transform: scale(1);
-            opacity: 1;
-        }
-
+        /* 左右區塊容器 */
         .card-left-section, .card-right-section {
             width: 350px;
-            height: 525px; 
+            /* height: 525px;  <-- 🔴 移除固定高度，讓它隨內容撐開 (為了容納按鈕) */
             position: relative;
+            /* 🔴 確保右側容器有足夠空間顯示下方按鈕 */
+            min-height: 600px; 
+            display: flex; /* 🔴 讓內部元素更容易對齊 */
+            justify-content: center;
         }
 
+        /* 左側圖片樣式 */
         .card-left-img {
-            width: 100%;
-            height: 100%;
-            object-fit: fill; 
-            background-color: transparent;
-            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
-            cursor: default; 
+            width: 100%; height: 525px; /* 🔴 固定圖片高度 */
+            object-fit: fill; background-color: transparent;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); cursor: default;
         }
 
-        .card-stack-img {
+        /* =========================================
+           🔴 新增：右側堆疊卡片容器樣式
+           ========================================= */
+        .card-stack-wrapper {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 0; left: 0;
             width: 100%;
-            height: 100%;
+            /* 不設固定高度，讓它包住圖片和按鈕 */
+            display: flex;
+            flex-direction: column; /* 垂直排列 */
+            align-items: center;    /* 水平置中 */
             cursor: pointer;
-            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), filter 0.5s, z-index 0s;
+            transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0s;
+        }
+
+        /* 堆疊卡片裡的圖片樣式 */
+        .card-stack-img {
+            width: 100%; height: 525px; /* 🔴 固定圖片高度 */
             object-fit: fill;
             background-color: transparent;
             filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
+            transition: filter 0.5s; /* filter 效果移到這裡 */
         }
 
-        .card-stack-img[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); filter: brightness(1); }
-        .card-stack-img[data-layer="2"] { z-index: 2; transform: translateX(100px) scale(0.95); filter: brightness(0.6); }
-        .card-stack-img[data-layer="3"] { z-index: 1; transform: translateX(200px) scale(0.9); filter: brightness(0.4); }
+        /* 🔴 新增：Read More 按鈕樣式 */
+        .read-more-btn {
+            margin-top: 25px; /* 與卡片的距離 */
+            width: 200px;     /* 按鈕寬度，可自行調整 */
+            height: auto;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.3s ease;
+        }
+        .read-more-btn:hover { transform: scale(1.05); }
+        
+        /* 🔴 新增：隱藏用的 class */
+        .hidden {
+            display: none !important;
+            opacity: 0;
+        }
+
+        /* 堆疊邏輯 (應用在 wrapper 上) */
+        .card-stack-wrapper[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); }
+        .card-stack-wrapper[data-layer="1"] .card-stack-img { filter: brightness(1) drop-shadow(0 15px 25px rgba(0,0,0,0.5)); }
+        
+        .card-stack-wrapper[data-layer="2"] { z-index: 2; transform: translateX(100px) scale(0.95); }
+        .card-stack-wrapper[data-layer="2"] .card-stack-img { filter: brightness(0.6) drop-shadow(0 15px 25px rgba(0,0,0,0.5)); }
+        
+        .card-stack-wrapper[data-layer="3"] { z-index: 1; transform: translateX(200px) scale(0.9); }
+        .card-stack-wrapper[data-layer="3"] .card-stack-img { filter: brightness(0.4) drop-shadow(0 15px 25px rgba(0,0,0,0.5)); }
 
         @media (max-width: 900px) {
             .card-content-wrapper { flex-direction: column; align-items: center; gap: 40px; transform: scale(0.65) !important; }
             #card-system.show .card-content-wrapper { transform: scale(0.75) !important; }
         }
-
     </style>
 </head>
 <body>
 
 <div id="loading-screen">
     <div class="loading-text">LOADING... 0%</div>
-    <div class="loading-bar-container">
-        <div class="loading-bar"></div>
-    </div>
+    <div class="loading-bar-container"><div class="loading-bar"></div></div>
 </div>
 
 <div id="game-stage">
     <div id="scrolling-layer">
-        <img id="bg-img" src="" alt="Background"> <div class="scene-obj" id="obj1"></div>
+        <img id="bg-img" src="" alt="Background">
+        <div class="scene-obj" id="obj1"></div>
         <div class="scene-obj" id="obj2"></div>
     </div>
-
     <div id="character"></div>
     <div id="transition-wave"></div>
 
@@ -248,10 +146,22 @@
             <div class="card-left-section">
                 <img id="card-left-display" class="card-left-img" src="" alt="Intro Card">
             </div>
+            
             <div class="card-right-section">
-                <img class="card-stack-img" data-layer="1" data-index="1" src="" alt="Card 1">
-                <img class="card-stack-img" data-layer="2" data-index="2" src="" alt="Card 2">
-                <img class="card-stack-img" data-layer="3" data-index="3" src="" alt="Card 3">
+                
+                <div class="card-stack-wrapper" data-layer="1">
+                    <img class="card-stack-img" id="stack-img-1" src="" alt="Card 1">
+                    <img id="fern-read-more-btn" class="read-more-btn hidden" src="images/read_more_btn.png" alt="Read More">
+                </div>
+
+                <div class="card-stack-wrapper" data-layer="2">
+                    <img class="card-stack-img" id="stack-img-2" src="" alt="Card 2">
+                </div>
+
+                <div class="card-stack-wrapper" data-layer="3">
+                    <img class="card-stack-img" id="stack-img-3" src="" alt="Card 3">
+                </div>
+
             </div>
         </div>
     </div>
@@ -283,13 +193,7 @@
         }
     };
 
-    const state = {
-        isWater: false,
-        isLocked: true, // 🔴 預設鎖定，等載入完才解鎖
-        charX: 50,
-        frameIndex: 1,
-        direction: 1
-    };
+    const state = { isWater: false, isLocked: true, charX: 50, frameIndex: 1, direction: 1 };
 
     const el = {
         loadingScreen: document.getElementById('loading-screen'),
@@ -304,30 +208,30 @@
         obj2: document.getElementById('obj2'),
         cardSystem: document.getElementById('card-system'),
         cardLeft: document.getElementById('card-left-display'),
-        stackCards: document.querySelectorAll('.card-stack-img')
+        // 🔴 更新選取器：選取新的 wrapper 和圖片
+        stackWrappers: document.querySelectorAll('.card-stack-wrapper'),
+        stackImages: [
+            document.getElementById('stack-img-1'),
+            document.getElementById('stack-img-2'),
+            document.getElementById('stack-img-3')
+        ],
+        // 🔴 新增：選取按鈕
+        readMoreBtn: document.getElementById('fern-read-more-btn')
     };
 
     // =========================================
-    // 🔴 預載入核心邏輯
+    // 預載入 (加入新按鈕圖片)
     // =========================================
     function preloadAllAssets() {
-        // 1. 收集所有需要載入的圖片路徑
-        let imagesToLoad = [
-            'images/wave.png',
-            CONFIG.land.bg,
-            CONFIG.water.bg
-        ];
+        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/read_more_btn.png']; // 🔴 加入按鈕圖
 
-        // 收集主角動畫 (Walk & Swim)
         for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
         for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
 
-        // 收集物件及其發光版、卡片
         const allObjects = [...CONFIG.land.objects, ...CONFIG.water.objects];
         allObjects.forEach(obj => {
             imagesToLoad.push(obj.src);
-            imagesToLoad.push(obj.src.replace('.png', '-glow.png')); // 發光版
-            // 卡片
+            imagesToLoad.push(obj.src.replace('.png', '-glow.png'));
             imagesToLoad.push(`images/${obj.id}_card_left.png`);
             imagesToLoad.push(`images/${obj.id}_card_1.png`);
             imagesToLoad.push(`images/${obj.id}_card_2.png`);
@@ -336,25 +240,13 @@
 
         let loadedCount = 0;
         const total = imagesToLoad.length;
-
-        // 2. 開始下載
-        if (total === 0) {
-            startGame();
-            return;
-        }
+        if (total === 0) { startGame(); return; }
 
         imagesToLoad.forEach(src => {
             const img = new Image();
             img.src = src;
-            img.onload = () => {
-                loadedCount++;
-                updateLoadingProgress(loadedCount, total);
-            };
-            img.onerror = () => {
-                console.warn(`Failed to load: ${src}`); // 容錯：就算圖片不見也繼續
-                loadedCount++;
-                updateLoadingProgress(loadedCount, total);
-            };
+            img.onload = () => { loadedCount++; updateLoadingProgress(loadedCount, total); };
+            img.onerror = () => { console.warn(`Failed to load: ${src}`); loadedCount++; updateLoadingProgress(loadedCount, total); };
         });
     }
 
@@ -362,33 +254,23 @@
         const percent = Math.floor((current / total) * 100);
         el.loadingBar.style.width = `${percent}%`;
         el.loadingText.textContent = `LOADING... ${percent}%`;
-
-        if (current >= total) {
-            setTimeout(startGame, 500); // 稍微停一下讓使用者看到 100%
-        }
+        if (current >= total) { setTimeout(startGame, 500); }
     }
 
     function startGame() {
-        el.loadingScreen.classList.add('fade-out'); // 淡出 Loading
-        el.gameStage.classList.add('ready'); // 淡入遊戲
-        
-        // 初始化遊戲畫面
+        el.loadingScreen.classList.add('fade-out');
+        el.gameStage.classList.add('ready');
         el.bgImg.onload = () => { render(); };
         updateSceneAssets();
         setupObjectInteractions();
         setupCardSystem();
         render();
-
-        // 解鎖操作
-        setTimeout(() => {
-            state.isLocked = false;
-        }, 500);
+        setTimeout(() => { state.isLocked = false; }, 500);
     }
 
     // =========================================
-    // 遊戲邏輯 (與之前相同)
+    // 遊戲邏輯
     // =========================================
-    
     function setupObjectInteractions() {
         const objects = [el.obj1, el.obj2];
         objects.forEach(obj => {
@@ -416,26 +298,46 @@
     }
 
     function setupCardSystem() {
-        el.stackCards.forEach(card => {
-            card.addEventListener('click', (e) => {
+        // 🔴 更新：監聽 wrapper 的點擊事件
+        el.stackWrappers.forEach(wrapper => {
+            wrapper.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (card.getAttribute('data-layer') !== "1") {
-                    rotateStack(card);
+                if (wrapper.getAttribute('data-layer') !== "1") {
+                    rotateStack(wrapper);
                 }
             });
         });
 
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
+        // 🔴 按鈕點擊事件 (防止關閉卡片，可在此加入跳轉連結)
+        el.readMoreBtn.addEventListener('click', (e) => {
+             e.stopPropagation();
+             console.log('Read More Clicked!');
+             // window.open('https://your-link.com', '_blank'); // 範例連結
+        });
     }
 
     function openCards(objectId) {
         state.isLocked = true;
         el.cardLeft.src = `images/${objectId}_card_left.png`;
-        el.stackCards.forEach((card, index) => {
-            card.src = `images/${objectId}_card_${index + 1}.png`;
-            card.setAttribute('data-layer', index + 1);
+
+        // 更新堆疊卡片圖片和順序
+        el.stackImages.forEach((img, index) => {
+            img.src = `images/${objectId}_card_${index + 1}.png`;
         });
+        // 重置 wrapper 順序
+        el.stackWrappers.forEach((wrapper, index) => {
+             wrapper.setAttribute('data-layer', index + 1);
+        });
+
+        // 🔴 關鍵邏輯：判斷是否顯示按鈕
+        if (objectId === 'fern') {
+            el.readMoreBtn.classList.remove('hidden');
+        } else {
+            el.readMoreBtn.classList.add('hidden');
+        }
+
         el.cardSystem.classList.add('show');
     }
 
@@ -444,122 +346,61 @@
         el.cardSystem.classList.remove('show');
     }
 
-    function rotateStack(clickedCard) {
-        const layer1 = document.querySelector('.card-stack-img[data-layer="1"]');
-        const layer2 = document.querySelector('.card-stack-img[data-layer="2"]');
-        const layer3 = document.querySelector('.card-stack-img[data-layer="3"]');
-        const currentLayer = clickedCard.getAttribute('data-layer');
+    function rotateStack(clickedWrapper) {
+        const layer1 = document.querySelector('.card-stack-wrapper[data-layer="1"]');
+        const layer2 = document.querySelector('.card-stack-wrapper[data-layer="2"]');
+        const layer3 = document.querySelector('.card-stack-wrapper[data-layer="3"]');
+        const currentLayer = clickedWrapper.getAttribute('data-layer');
 
         if (currentLayer === "2") {
-            clickedCard.setAttribute('data-layer', 1);
+            clickedWrapper.setAttribute('data-layer', 1);
             layer1.setAttribute('data-layer', 3);
             layer3.setAttribute('data-layer', 2);
         } else if (currentLayer === "3") {
-            clickedCard.setAttribute('data-layer', 1);
+            clickedWrapper.setAttribute('data-layer', 1);
             layer1.setAttribute('data-layer', 2);
             layer2.setAttribute('data-layer', 3);
         }
     }
 
+    // ... (其餘捲動、渲染、轉場函數保持不變) ...
     window.addEventListener('wheel', (e) => {
         if (state.isLocked) return; 
         const moveDirection = e.deltaY > 0 ? 1 : -1;
         const speed = 8; 
         state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
-
-        if (!state.isWater) {
-            if (nextCharX < 0) nextCharX = 0;
-        } else {
-            const maxRight = window.innerWidth - el.char.offsetWidth;
-            if (nextCharX > maxRight) nextCharX = maxRight;
-        }
-
-        if (nextCharX !== state.charX) {
-            state.charX = nextCharX;
-            state.frameIndex += 0.25; 
-        }
-
-        if (moveDirection === 1) {
-            if (!state.isWater && state.charX > window.innerWidth) {
-                triggerTransition('toWater');
-            }
-        } else {
-            if (state.isWater && state.charX < -50) { 
-                triggerTransition('toLand');
-            }
-        }
+        if (!state.isWater) { if (nextCharX < 0) nextCharX = 0; } else { const maxRight = window.innerWidth - el.char.offsetWidth; if (nextCharX > maxRight) nextCharX = maxRight; }
+        if (nextCharX !== state.charX) { state.charX = nextCharX; state.frameIndex += 0.25; }
+        if (moveDirection === 1) { if (!state.isWater && state.charX > window.innerWidth) { triggerTransition('toWater'); } } else { if (state.isWater && state.charX < -50) { triggerTransition('toLand'); } }
         render();
     });
 
     function getSyncedBgX() {
-        const stageWidth = window.innerWidth;
-        const bgWidth = el.bgImg.offsetWidth || stageWidth; 
-        if (bgWidth <= stageWidth) return 0;
-        const maxBgScroll = bgWidth - stageWidth;
-        let progress = state.charX / stageWidth;
-        progress = Math.min(Math.max(progress, 0), 1);
+        const stageWidth = window.innerWidth; const bgWidth = el.bgImg.offsetWidth || stageWidth; 
+        if (bgWidth <= stageWidth) return 0; const maxBgScroll = bgWidth - stageWidth;
+        let progress = state.charX / stageWidth; progress = Math.min(Math.max(progress, 0), 1);
         return - (progress * maxBgScroll);
     }
-
     function render() {
-        const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)';
-        el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
-        const bgX = getSyncedBgX();
-        el.scrollingLayer.style.transform = `translateX(${bgX}px)`;
-        const currentConf = state.isWater ? CONFIG.water : CONFIG.land;
-        const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
+        const scale = state.direction === 1 ? 'scaleX(1)' : 'scaleX(-1)'; el.char.style.transform = `translateX(${state.charX}px) ${scale}`;
+        const bgX = getSyncedBgX(); el.scrollingLayer.style.transform = `translateX(${bgX}px)`;
+        const currentConf = state.isWater ? CONFIG.water : CONFIG.land; const frameNum = Math.floor(state.frameIndex) % currentConf.frames + 1;
         el.char.style.backgroundImage = `url('${currentConf.pathPrefix}${frameNum}${currentConf.ext}')`;
     }
-
     function updateSceneAssets() {
-        const conf = state.isWater ? CONFIG.water : CONFIG.land;
-        el.char.style.width = conf.dims.w;
-        el.char.style.height = conf.dims.h;
-        state.frameIndex = 1;
-        el.bgImg.src = conf.bg;
-        const o1 = conf.objects[0];
-        const o2 = conf.objects[1];
-        el.obj1.style.backgroundImage = `url('${o1.src}')`;
-        el.obj1.style.width = o1.w;
-        el.obj1.style.height = o1.h;
-        el.obj1.style.left = o1.left;
-        el.obj1.style.bottom = o1.bottom;
-        el.obj2.style.backgroundImage = `url('${o2.src}')`;
-        el.obj2.style.width = o2.w;
-        el.obj2.style.height = o2.h;
-        el.obj2.style.left = o2.left;
-        el.obj2.style.bottom = o2.bottom;
+        const conf = state.isWater ? CONFIG.water : CONFIG.land; el.char.style.width = conf.dims.w; el.char.style.height = conf.dims.h; state.frameIndex = 1; el.bgImg.src = conf.bg;
+        const o1 = conf.objects[0]; const o2 = conf.objects[1];
+        el.obj1.style.backgroundImage = `url('${o1.src}')`; el.obj1.style.width = o1.w; el.obj1.style.height = o1.h; el.obj1.style.left = o1.left; el.obj1.style.bottom = o1.bottom;
+        el.obj2.style.backgroundImage = `url('${o2.src}')`; el.obj2.style.width = o2.w; el.obj2.style.height = o2.h; el.obj2.style.left = o2.left; el.obj2.style.bottom = o2.bottom;
     }
-
     function triggerTransition(type) {
-        if (state.isLocked) return;
-        state.isLocked = true;
-        el.wave.classList.add('active');
-        setTimeout(() => {
-            if (type === 'toWater') {
-                state.isWater = true;
-                state.charX = 0; 
-            } else {
-                state.isWater = false;
-                state.charX = window.innerWidth; 
-            }
-            updateSceneAssets();
-            el.bgImg.onload = () => { render(); };
-            render();
-        }, 1200);
-        setTimeout(() => {
-            el.wave.classList.remove('active');
-            state.isLocked = false;
-        }, 2500);
+        if (state.isLocked) return; state.isLocked = true; el.wave.classList.add('active');
+        setTimeout(() => { if (type === 'toWater') { state.isWater = true; state.charX = 0; } else { state.isWater = false; state.charX = window.innerWidth; } updateSceneAssets(); el.bgImg.onload = () => { render(); }; render(); }, 1200);
+        setTimeout(() => { el.wave.classList.remove('active'); state.isLocked = false; }, 2500);
     }
-
     window.addEventListener('resize', () => { render(); });
-    
-    // 🔴 程式進入點改為預載入
     preloadAllAssets();
-
 </script>
-
 </body>
 </html>
