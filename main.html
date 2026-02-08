@@ -8,6 +8,7 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: #000; font-family: sans-serif;
+            /* Safari 滾動優化 */
             overscroll-behavior: none; touch-action: none;
         }
 
@@ -61,6 +62,7 @@
             opacity: 0; pointer-events: none; 
         }
         .read-more-btn:hover { transform: scale(1.1); }
+        /* 只有在第一層的卡片按鈕可以被點擊 */
         .card-stack-wrapper[data-layer="1"] .read-more-btn { opacity: 1; pointer-events: auto; }
 
         .card-stack-wrapper[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); }
@@ -87,6 +89,7 @@
         .modal-inner-wrapper { position: relative; display: inline-block; max-width: 100vw; max-height: 100vh; transition: width 0.3s ease; }
         .modal-bg-img { display: block; height: 95vh; width: auto; object-fit: contain; cursor: zoom-in; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
 
+        /* 動態內容區塊 */
         .dynamic-content-area {
             position: absolute; top: 15%; left: 10%; width: 80%; height: 60%; 
             overflow-y: auto; color: #333; font-size: 1rem; line-height: 1.6; text-align: left; z-index: 15;
@@ -108,7 +111,7 @@
         #btn-play-music, #btn-play-music-2 { bottom: 6%; left: 8%; width: 20%; }
         #btn-gain-points { bottom: 6%; right: 8%; width: 25%; }
 
-        /* 🔴 新增：控制按鈕隱藏的 class */
+        /* 隱藏按鈕用 */
         .btn-hidden { display: none !important; }
 
     </style>
@@ -179,35 +182,82 @@
                 { 
                     id: 'fern', src: 'images/fern.png', w: '150px', h: '150px', left: '5%', bottom: '40%',
                     content: [
-                        { // Card 1 (有兩層)
-                            shortHtml: `<h2>🌿 蕨類基礎</h2><p>蕨類是古老的植物，沒有花和種子。點擊按鈕了解更多歷史！</p>`,
-                            longHtml: `<h2>📜 蕨類詳細歷史</h2><p>恐龍時代就存在的活化石！</p><img class="content-pic" src="images/fern.png">`
+                        { // Card 1: 完整內容
+                            shortHtml: `
+                                <div style="margin-bottom: 20px;">
+                                    <p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;">
+                                        <span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>
+                                        Cloud Forest acts like a giant water tower of our planet?!
+                                    </p>
+                                    <h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2>
+                                </div>
+                                <img class="content-pic" src="images/fern_content_1.jpg" alt="Cloud Forest" style="margin-bottom: 5px;">
+                                <p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cloud forests can be anywhere as long as the conditions are met</p>
+                                <p>Cloud forests play a unique ecological role by capturing moisture not only through rainfall but also through humidity, mist and fog. These <b>horizontal water inputs</b> reduce solar radiation and temperature, shaping local conditions and limiting evapotranspiration. Despite being among the most biodiverse ecosystems on Earth, cloud forests occupy <b>less than 1%</b> of the planet and depend on precise combinations of altitude, temperature and high humidity.</p>
+                                <p>Today, they are rapidly disappearing due to monocultural agriculture, chemical practices and climate change. <b>Rising temperatures</b> are pushing cloud ceilings <b>higher</b>, leaving original vegetation exposed to <b>drier</b> conditions. Beyond their ecological value, cloud forests hold deep cultural significance, especially in Asia, where seas of clouds have long symbolised transcendence, beauty and the connection between earthly and celestial realms.</p>
+                                <p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to explore deeper into the clouds?</p>
+                            `,
+                            longHtml: `
+                                <div style="margin-bottom: 20px;">
+                                    <p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;">
+                                        <span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>
+                                        Cloud Forests inspired so many poets across millennia?!
+                                    </p>
+                                    <h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2>
+                                </div>
+                                <img class="content-pic" src="images/fern_content_2.jpg" alt="Mythical Woods" style="margin-bottom: 5px;">
+                                <p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Take a deep dive into the mythical woods</p>
+                                <p>The significance of precipitation to the recipient ecosystems is well-known but it’s limited to its <b>ferocity</b> (rain gauge in one time and depending on various types of soil, which signifies different capacity of absorption), categorised as <b>vertical</b> water effect. However, the <b>horizontal</b> layer matters too - the humidity in the air. Cloud Forests serve in this particular role. Clouds, mists and fogs can dramatically affect local environmental conditions including reductions of <b>solar radiation</b>, <b>temperature</b> and thereby <b>evapotranspiration</b>.</p>
+                                <p>While being the most biodiverse places on Earth, Cloud forests are becoming increasingly difficult to find due to environmental changes and human pressure. Accounting for <b>less than 1%</b> on Earth, they require a precise combination of factors : specific <b>temperature ranges</b>, high <b>humidity</b> and <b>drastic</b> change in <b>altitude</b>, which explains why it happens easily in tropical montane systems (in narrow definition) but on coastlines as well. In other words, the air masses are highly humid and the <b>adiabatic lapse rate</b> could guarantee the condensation point to be reached (the reason why clouds exist). As a result, they are dominated by <b>broad-leaved evergreen trees</b>, <b>epiphytes</b> and <b>epiphylls</b>.</p>
+                                <p>Due to excessive mono-cultural practises (e.g. EU recently reaccepted using Glyphosate for weed control - resulting in bracken dominated troubles years after) such as planting <b>tea plant</b> (Camellia sinensis) and <b>coffee</b> (Coffea), the most valuable agricultural commodities worldwide, this particular type of ecosystems is receding drastically in the last 2 decades. In addition, with Global Warming, the cloud ceiling is moving higher as a manifestation of a critical interaction between temperature and moisture supply. Some research in the Appalachians indicate the ceilings are deserting the original cloud forest vegetation which will be exposed in <b>drier</b> conditions thus disappearing indefinitely.</p>
+                                <p>Interestingly, the <b>ecotones</b> (adjacent systems on the border of 2 different ones) of Cloud Forests are <b>beautifully</b> unique, supporting rare assemblages of species, often fostering evolution & diversity in the long run and facilitating species <b>transition</b>, such as predator movement across different environments.</p>
+                                <p>From another perspective, this magical comb holds a grand significance in Asian cultures across millennia, representing aesthetic, spiritual and symbolic value. It’s the bridge between the earthly and celestial realms to many folktales and the inspirations to numerous great poets.</p>
+                                <p>These unique phenomena (Yunhai = Sea of Clouds) have been regarded as otherworldly scenes evoking feelings of peace and transcendence, a <b>cultural heritage</b> in human history.</p>
+                                <p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know what actions you can take to make a difference?</p>
+                            `
                         },
-                        { // Card 2 (只有一層)
-                            shortHtml: `<h2>💧 蕨類與水分</h2><p>蕨類非常依賴水，通常生長在陰暗潮濕的角落。</p>`,
-                            longHtml: `` // 不會用到
+                        { // Card 2: 只有 Short
+                            shortHtml: `
+                                <h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">Cloud Forest Poetry –<br>Among the White Clouds</h2>
+                                <p>In Chinese poetry, cloud forests inspired numerous Tang Dynasty poets, including Du Mu, Wang Wei, Li Bai, and Han Shan. They are frequently depicted within <b>shanshui</b> (mountain and stream) poetry, emphasizing reclusion, the harmony between man and nature, and Taoist or Buddhist themes of emptiness and transcendence.</p>
+                                <img class="content-pic" src="images/fern_card2_content.jpg" alt="Shanshui Painting" style="margin: 20px 0;">
+                                <p>Cloud forests often appear in imagery such as "spitting mist" and "moss is slippery", reflecting the abundance of epiphytes found in these ecosystems. As written in <i>The Cold Mountain Poems</i>:</p>
+                                <div style="background-color: rgba(255,255,255,0.7); padding: 15px; border-left: 4px solid #555; margin: 20px 0; font-style: italic;">
+                                    <p style="margin: 0; font-family: serif;">"The long gorge choked with scree and boulders,<br>The wide creek, the mist blurred grass.<br><b>The moss is slippery, though there's been no rain,</b><br>The pine sings, but there's no wind.<br>Who can leap the world's ties<br>And sit with me among the white clouds?"</p>
+                                    <p style="margin-top: 10px; font-size: 0.9rem; color: #666; text-align: right;">— Han Shan (Cold Mountain)</p>
+                                </div>
+                                <p><b>Shanshui</b> paintings echo these same cloud forests, where mist erases boundaries between mountains, trees, and the human spirit. In both art and poetry, cloud forests are not just landscapes—they are places to disappear into.</p>
+                            `,
+                            longHtml: ``
                         },
-                        { // Card 3 (只有一層)
-                            shortHtml: `<h2>👀 觀察重點</h2><p>翻開葉子背面，你可能會看到一點一點的孢子囊群。</p>`,
-                            longHtml: `` // 不會用到
+                        { // Card 3: 只有 Short
+                            shortHtml: `
+                                <h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 10px; color: #1a5f1a;">CLOUD FOREST –<br>WHAT YOU CAN DO</h2>
+                                <div style="margin-bottom: 20px;">
+                                    <p style="margin-bottom: 15px;"><b>1. Support regenerative agriculture products:</b><br>Purchase sustainably produced products from syntropic farms (e.g., regions like Kenya). <b>Agroforestry</b> and <b>Syntropic farming</b> integrate shade-tolerant crops—such as coffee and cacao—with native tree species. This helps protect biodiversity, improve soil health, and enhance environmental resilience.</p>
+                                    <p style="margin-bottom: 15px;"><b>2. Choose "ugly" fruits and vegetables:</b><br>Stop pursuing standardized, perfect appearances. Prioritise imperfect produce and accept seasonal yield variations. This is the most genuine way to protect regenerating land.</p>
+                                    <p style="margin-bottom: 10px;"><b>3. Choose products with sustainability certifications:</b><br>Look for these logos to support forest conservation, fair labor, and organic practices:</p>
+                                    <img class="content-pic" src="images/fern_card3_certs.jpg" alt="Sustainability Certifications" style="margin: 5px 0 15px 0; background: white; padding: 10px; border-radius: 8px;">
+                                    <ul style="padding-left: 20px; margin-bottom: 15px; font-size: 0.9rem; color: #444;">
+                                        <li><b>Rainforest Alliance:</b> Focuses on environmental protection and sustainable production.</li>
+                                        <li><b>Smithsonian Bird Friendly®:</b> Gold-standard for protecting bird habitats and shade cover.</li>
+                                        <li><b>Fair Trade:</b> Focuses on fair pricing and labor rights.</li>
+                                        <li><b>USDA Organic:</b> Grown without synthetic pesticides or GMOs.</li>
+                                    </ul>
+                                    <p style="margin-bottom: 15px;"><b>4. Support regulatory measures:</b><br>Support policies like the <b>EU Deforestation Regulation (EUDR)</b>, which requires companies to prove their products are not sourced from recently deforested land.</p>
+                                    <p><b>5. Promote whole-plant utilization:</b><br>Choose products that use agricultural by-products—such as <b>cascara</b> (coffee cherry tea), reused coffee grounds, or cacao husks. This increases farm income and reduces the pressure to clear new land.</p>
+                                </div>
+                            `,
+                            longHtml: ``
                         }
                     ]
                 },
                 { 
                     id: 'flower', src: 'images/flower.png', w: '150px', h: '150px', left: '40%', bottom: '10%',
                     content: [
-                        { // Card 1
-                            shortHtml: `<h2>🌸 花朵簡介</h2><p>這是一朵路邊的小花。點擊看詳細構造。</p>`,
-                            longHtml: `<h2>🌺 花的構造解析</h2><p>雄蕊、雌蕊、花瓣的完美配合。</p><img class="content-pic" src="images/flower.png">`
-                        },
-                        { // Card 2
-                            shortHtml: `<h2>🐝 授粉</h2><p>蜜蜂和蝴蝶是花朵的好朋友。</p>`,
-                            longHtml: ``
-                        },
-                        { // Card 3
-                            shortHtml: `<h2>☀️ 光合作用</h2><p>葉子才是製造養分的工廠。</p>`,
-                            longHtml: ``
-                        }
+                        { shortHtml: `<h2>🌸 Flower Card 1</h2><p>Content for flower card 1...</p>`, longHtml: `<h2>🌺 Flower Long</h2><p>Long content...</p>` },
+                        { shortHtml: `<h2>🐝 Flower Card 2</h2><p>Content for flower card 2...</p>`, longHtml: `` },
+                        { shortHtml: `<h2>☀️ Flower Card 3</h2><p>Content for flower card 3...</p>`, longHtml: `` }
                     ]
                 }
             ]
@@ -220,35 +270,17 @@
                 { 
                     id: 'jellyfish', src: 'images/jellyfish.png', w: '150px', h: '150px', left: '40%', bottom: '50%',
                     content: [
-                        { // Card 1
-                            shortHtml: `<h2>👾 水母構造</h2><p>身體 95% 都是水！點擊深入了解。</p>`,
-                            longHtml: `<h2>🌊 海洋的幽靈</h2><p>沒有大腦心臟，卻能優雅游動。</p><img class="content-pic" src="images/jellyfish.png">`
-                        },
-                        { // Card 2
-                            shortHtml: `<h2>⚡ 觸手有毒</h2><p>刺細胞是用來捕食和防禦的武器。</p>`,
-                            longHtml: ``
-                        },
-                        { // Card 3
-                            shortHtml: `<h2>💡 生物螢光</h2><p>深海中的微光。</p>`,
-                            longHtml: ``
-                        }
+                        { shortHtml: `<h2>👾 Jellyfish Card 1</h2><p>Content 1...</p>`, longHtml: `<h2>🌊 Jellyfish Long</h2><p>Long...</p>` },
+                        { shortHtml: `<h2>⚡ Jellyfish Card 2</h2><p>Content 2...</p>`, longHtml: `` },
+                        { shortHtml: `<h2>💡 Jellyfish Card 3</h2><p>Content 3...</p>`, longHtml: `` }
                     ]
                 },
                 { 
                     id: 'fish', src: 'images/fish.png', w: '200px', h: '200px', left: '70%', bottom: '70%',
                     content: [
-                        { // Card 1
-                            shortHtml: `<h2>🐠 熱帶魚</h2><p>珊瑚礁中的小精靈。</p>`,
-                            longHtml: `<h2>🏰 珊瑚礁生態</h2><p>魚類與珊瑚礁的共生關係。</p><img class="content-pic" src="images/fish.png">`
-                        },
-                        { // Card 2
-                            shortHtml: `<h2>🐟 魚鰓</h2><p>水中的呼吸器官。</p>`,
-                            longHtml: ``
-                        },
-                        { // Card 3
-                            shortHtml: `<h2>🦈 躲避天敵</h2><p>團結力量大！</p>`,
-                            longHtml: ``
-                        }
+                        { shortHtml: `<h2>🐠 Fish Card 1</h2><p>Content 1...</p>`, longHtml: `<h2>🏰 Fish Long</h2><p>Long...</p>` },
+                        { shortHtml: `<h2>🐟 Fish Card 2</h2><p>Content 2...</p>`, longHtml: `` },
+                        { shortHtml: `<h2>🦈 Fish Card 3</h2><p>Content 3...</p>`, longHtml: `` }
                     ]
                 }
             ]
@@ -403,11 +435,10 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 
-                // 1. 取得這顆按鈕代表第幾張卡片
                 const index = parseInt(e.target.getAttribute('data-card-index'));
                 state.currentCardIndex = index; 
 
-                // 2. 載入內容
+                // 載入內容
                 if(state.currentActiveObj && state.currentActiveObj.content) {
                     const cardContent = state.currentActiveObj.content[index];
                     if(cardContent) {
@@ -415,8 +446,8 @@
                     }
                 }
 
-                // 🔴 3. 判斷是否顯示 Gain Points 按鈕
-                if (index === 0) { // 只有第一張卡片有第二層
+                // 🔴 判斷是否顯示 Gain Points 按鈕 (只有 Card 1 有)
+                if (index === 0) { 
                     el.btnGainPoints.classList.remove('btn-hidden');
                 } else {
                     el.btnGainPoints.classList.add('btn-hidden');
