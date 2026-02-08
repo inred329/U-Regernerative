@@ -6,27 +6,24 @@
     <title>Journey Transition</title>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background-color: #000; font-family: sans-serif;
+            overscroll-behavior: none; touch-action: none;
         }
 
-        /* Loading 畫面 */
+        /* Loading */
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #1a1a1a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity 0.5s ease; }
         #loading-screen.fade-out { opacity: 0; pointer-events: none; }
         .loading-bar-container { width: 300px; height: 10px; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 20px; }
         .loading-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.1s linear; }
         .loading-text { font-size: 18px; letter-spacing: 2px; }
 
-        /* 遊戲舞台 */
+        /* Stage */
         #game-stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
         #game-stage.ready { opacity: 1; }
         #scrolling-layer { position: absolute; top: 0; left: 0; height: 100%; will-change: transform; z-index: 1; }
         #bg-img { display: block; height: 100%; width: auto; max-width: none; }
+        
         @keyframes floating { 0% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } 100% { transform: translateY(0px) rotate(0deg); } }
         .scene-obj { position: absolute; background-repeat: no-repeat; background-size: contain; background-position: center; z-index: 2; transition: opacity 0.3s; animation: floating 4s ease-in-out infinite; cursor: pointer; }
         .scene-obj:hover { animation-play-state: paused; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); }
@@ -36,7 +33,7 @@
         #transition-wave { position: fixed; left: 0; width: 100%; z-index: 999; pointer-events: none; height: 400%; top: 100%; background-image: url('images/wave.png'); background-size: cover; background-position: top center; transition: top 1.5s ease-in-out; }
         #transition-wave.active { top: -300%; }
 
-        /* 卡片系統 */
+        /* Card System */
         #card-system {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000;
             background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -45,10 +42,7 @@
         }
         #card-system.show { opacity: 1; pointer-events: auto; }
 
-        .card-content-wrapper {
-            display: flex; gap: 20px; align-items: center;
-            transform: scale(0.9); opacity: 0; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
-        }
+        .card-content-wrapper { display: flex; gap: 20px; align-items: center; transform: scale(0.9); opacity: 0; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease; }
         #card-system.show .card-content-wrapper { transform: scale(1.3); opacity: 1; }
 
         .card-left-section, .card-right-section { width: 350px; height: 525px; position: relative; display: flex; justify-content: center; }
@@ -61,11 +55,17 @@
         }
         .card-stack-img { width: 100%; height: 100%; object-fit: fill; background-color: transparent; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: filter 0.5s; }
 
+        /* Read More Btn (現在所有卡片都有) */
         .read-more-btn {
-            position: absolute; bottom: 40px; left: 50px; width: 150px; height: auto; cursor: pointer; z-index: 10; transition: transform 0.2s ease, opacity 0.3s ease;
+            position: absolute; bottom: 40px; left: 50px; width: 150px; height: auto; cursor: pointer; z-index: 10; 
+            transition: transform 0.2s ease, opacity 0.3s ease;
+            /* 預設隱藏，只有第一層顯示 */
+            opacity: 0; pointer-events: none; 
         }
         .read-more-btn:hover { transform: scale(1.1); }
-        .hidden { display: none !important; opacity: 0; }
+        
+        /* 只有當 Wrapper 是 Layer 1 時，按鈕才顯示 */
+        .card-stack-wrapper[data-layer="1"] .read-more-btn { opacity: 1; pointer-events: auto; }
 
         .card-stack-wrapper[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); }
         .card-stack-wrapper[data-layer="1"] .card-stack-img { filter: brightness(1) drop-shadow(0 15px 25px rgba(0,0,0,0.5)); }
@@ -80,7 +80,7 @@
         }
 
         /* =========================================
-           通用燈箱樣式
+           🔴 新增：燈箱內容佈局 CSS
            ========================================= */
         .fullscreen-modal {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 3000;
@@ -94,29 +94,49 @@
             position: relative; display: inline-block; max-width: 100vw; max-height: 100vh; transition: width 0.3s ease;
         }
 
-        .modal-content-img {
+        /* 背景圖 (容器) */
+        .modal-bg-img {
             display: block; height: 95vh; width: auto; object-fit: contain; cursor: zoom-in; box-shadow: 0 0 30px rgba(0,0,0,0.5);
         }
 
+        /* 🔴 關鍵：動態內容區域 (絕對定位在圖片上) */
+        .dynamic-content-area {
+            position: absolute;
+            top: 15%; /* 根據您的背景圖調整文字開始位置 */
+            left: 10%; 
+            width: 80%; /* 內容寬度 */
+            height: 60%; /* 內容高度，超過會捲動 */
+            
+            overflow-y: auto; /* 允許垂直捲動 */
+            color: #333;      /* 文字顏色，若是深色背景請改 #fff */
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: left;
+            z-index: 15;      /* 在背景圖之上，按鈕之下 */
+            
+            /* 隱藏捲軸但保留功能 (Chrome/Safari) */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .dynamic-content-area::-webkit-scrollbar { display: none; }
+
+        /* HTML 內容樣式微調 */
+        .dynamic-content-area h2 { margin-top: 0; color: #1a5f1a; font-size: 1.8rem; border-bottom: 2px solid #ccc; padding-bottom: 10px;}
+        .dynamic-content-area p { margin-bottom: 15px; }
+        .dynamic-content-area img.content-pic { width: 100%; border-radius: 8px; margin: 10px 0; }
+
+        /* Zoomed 狀態 */
         .fullscreen-modal.zoomed { display: block; overflow-y: auto; text-align: center; }
         .fullscreen-modal.zoomed .modal-inner-wrapper { display: inline-block; width: 100vw; max-width: none; max-height: none; }
-        .fullscreen-modal.zoomed .modal-content-img { width: 100vw; height: auto; cursor: zoom-out; }
-
-        .modal-interactive-btn {
-            position: absolute; z-index: 20; cursor: pointer; transition: transform 0.2s;
-        }
+        .fullscreen-modal.zoomed .modal-bg-img { width: 100vw; height: auto; cursor: zoom-out; }
+        
+        /* 按鈕樣式 */
+        .modal-interactive-btn { position: absolute; z-index: 20; cursor: pointer; transition: transform 0.2s; }
         .modal-interactive-btn:hover { transform: scale(1.05); }
         .modal-interactive-btn.playing { filter: drop-shadow(0 0 10px #00ff00); }
-
-        /* 🔴 修改：兩個播放按鈕共用同一個樣式 (左下角) */
-        #btn-play-music, #btn-play-music-2 { 
-            bottom: 6%; left: 8%; width: 20%; 
-        }
         
-        /* Gain Points 按鈕 (右下角) */
-        #btn-gain-points { 
-            bottom: 6%; right: 8%; width: 25%; 
-        }
+        #btn-play-music, #btn-play-music-2 { bottom: 6%; left: 8%; width: 20%; }
+        #btn-gain-points { bottom: 6%; right: 8%; width: 25%; }
 
     </style>
 </head>
@@ -144,13 +164,15 @@
             <div class="card-right-section">
                 <div class="card-stack-wrapper" data-layer="1">
                     <img class="card-stack-img" id="stack-img-1" src="" alt="Card 1">
-                    <img id="fern-read-more-btn" class="read-more-btn hidden" src="images/READ_MORE.png" alt="Read More">
+                    <img class="read-more-btn" src="images/READ_MORE.png" alt="Read More">
                 </div>
                 <div class="card-stack-wrapper" data-layer="2">
                     <img class="card-stack-img" id="stack-img-2" src="" alt="Card 2">
+                    <img class="read-more-btn" src="images/READ_MORE.png" alt="Read More">
                 </div>
                 <div class="card-stack-wrapper" data-layer="3">
                     <img class="card-stack-img" id="stack-img-3" src="" alt="Card 3">
+                    <img class="read-more-btn" src="images/READ_MORE.png" alt="Read More">
                 </div>
             </div>
         </div>
@@ -158,7 +180,11 @@
 
     <div id="read-more-modal" class="fullscreen-modal">
         <div class="modal-inner-wrapper">
-            <img id="read-more-content" class="modal-content-img" src="images/text_short.png" alt="Short Content">
+            <img id="modal1-bg" class="modal-bg-img" src="images/text_short.png" alt="Container">
+            
+            <div id="modal1-content-area" class="dynamic-content-area">
+                </div>
+
             <img id="btn-play-music" class="modal-interactive-btn" src="images/PLAY_MUSIC.png" alt="Play Music">
             <img id="btn-gain-points" class="modal-interactive-btn" src="images/GAIN_POINTS.png" alt="Gain Points">
         </div>
@@ -166,39 +192,99 @@
 
     <div id="gain-points-modal" class="fullscreen-modal">
         <div class="modal-inner-wrapper">
-            <img id="gain-points-content" class="modal-content-img" src="images/text_long.png" alt="Long Content">
-            <img id="btn-play-music-2" class="modal-interactive-btn" src="images/PLAY_MUSIC.png" alt="Play Music 2">
+            <img id="modal2-bg" class="modal-bg-img" src="images/text_long.png" alt="Container">
+            
+            <div id="modal2-content-area" class="dynamic-content-area">
+                </div>
+
+            <img id="btn-play-music-2" class="modal-interactive-btn" src="images/PLAY_MUSIC.png" alt="Play Music">
         </div>
     </div>
 </div>
 
 <script>
+    // 🔴 1. 資料結構升級：每個物件都有自己的 HTML 內容
     const CONFIG = {
         land: {
             bg: 'images/green1.png',
             dims: { w: '109.6px', h: '180px' },
-            frames: 6,
-            pathPrefix: 'svgs/Walk_man_',
-            ext: '.svg',
+            frames: 6, pathPrefix: 'svgs/Walk_man_', ext: '.svg',
             objects: [
-                { id: 'fern', src: 'images/fern.png', w: '150px', h: '150px', left: '5%', bottom: '40%' },
-                { id: 'flower', src: 'images/flower.png', w: '150px', h: '150px', left: '40%', bottom: '10%' }
+                { 
+                    id: 'fern', src: 'images/fern.png', w: '150px', h: '150px', left: '5%', bottom: '40%',
+                    // 內容設定
+                    content: {
+                        shortHtml: `
+                            <h2>🌿 關於蕨類 (Fern)</h2>
+                            <p>蕨類植物是地球上最古老的陸生植物之一。它們沒有花，也沒有種子，而是透過孢子進行繁殖。</p>
+                            <p>點擊下方按鈕獲取更多積分！</p>
+                        `,
+                        longHtml: `
+                            <h2>✨ 蕨類的秘密生活</h2>
+                            <p>你知道嗎？蕨類植物在恐龍時代就已經存在了！</p>
+                            <img class="content-pic" src="images/fern.png" alt="Fern Detail">
+                            <p>它們喜歡生長在陰暗潮濕的地方。台灣被稱為「蕨類王國」，擁有超過 600 種原生蕨類。</p>
+                            <p>這裡可以放入非常長的文章，使用者可以透過滑鼠滾輪上下捲動閱讀。</p>
+                        `
+                    }
+                },
+                { 
+                    id: 'flower', src: 'images/flower.png', w: '150px', h: '150px', left: '40%', bottom: '10%',
+                    content: {
+                        shortHtml: `
+                            <h2>🌸 神秘小花 (Flower)</h2>
+                            <p>這是一朵生長在路邊的神秘小花，散發著淡淡的清香。</p>
+                        `,
+                        longHtml: `
+                            <h2>🌺 花朵的構造</h2>
+                            <p>花是被子植物的繁殖器官。典型的花包含花萼、花冠、雄蕊和雌蕊。</p>
+                            <img class="content-pic" src="images/flower.png" alt="Flower Detail">
+                            <p>不同的顏色和香味是為了吸引特定的昆蟲來幫忙授粉喔！</p>
+                        `
+                    }
+                }
             ]
         },
         water: {
             bg: 'images/blue1.png',
             dims: { w: '323.43px', h: '260.62px' }, 
-            frames: 7,
-            pathPrefix: 'svgs/Swim_man_',
-            ext: '.svg',
+            frames: 7, pathPrefix: 'svgs/Swim_man_', ext: '.svg',
             objects: [
-                { id: 'jellyfish', src: 'images/jellyfish.png', w: '150px', h: '150px', left: '40%', bottom: '50%' },
-                { id: 'fish', src: 'images/fish.png', w: '200px', h: '200px', left: '70%', bottom: '70%' }
+                { 
+                    id: 'jellyfish', src: 'images/jellyfish.png', w: '150px', h: '150px', left: '40%', bottom: '50%',
+                    content: {
+                        shortHtml: `
+                            <h2>👾 水母 (Jellyfish)</h2>
+                            <p>水母身體 95% 都是水！看起來很柔軟，但有些觸手可是有毒的。</p>
+                        `,
+                        longHtml: `
+                            <h2>🌊 海洋的漂流者</h2>
+                            <p>水母沒有大腦、心臟或血液。它們透過傘狀體的收縮來移動。</p>
+                            <img class="content-pic" src="images/jellyfish.png" alt="Jellyfish Detail">
+                            <p>在深海中，有些水母甚至會發出美麗的生物螢光。</p>
+                        `
+                    }
+                },
+                { 
+                    id: 'fish', src: 'images/fish.png', w: '200px', h: '200px', left: '70%', bottom: '70%',
+                    content: {
+                        shortHtml: `
+                            <h2>🐠 熱帶魚 (Tropical Fish)</h2>
+                            <p>這隻色彩鮮豔的小魚正在珊瑚礁中尋找食物。</p>
+                        `,
+                        longHtml: `
+                            <h2>🐟 魚類的呼吸</h2>
+                            <p>魚類利用「鰓」在水中呼吸。水流過鰓時，其中的氧氣會被微血管吸收。</p>
+                            <img class="content-pic" src="images/fish.png" alt="Fish Detail">
+                            <p>保護海洋環境，讓這些美麗的生物能快樂地生活下去。</p>
+                        `
+                    }
+                }
             ]
         }
     };
 
-    const state = { isWater: false, isLocked: true, charX: 50, frameIndex: 1, direction: 1 };
+    const state = { isWater: false, isLocked: true, charX: 50, frameIndex: 1, direction: 1, currentActiveObj: null };
 
     const el = {
         loadingScreen: document.getElementById('loading-screen'),
@@ -211,6 +297,7 @@
         wave: document.getElementById('transition-wave'),
         obj1: document.getElementById('obj1'),
         obj2: document.getElementById('obj2'),
+        
         cardSystem: document.getElementById('card-system'),
         cardLeft: document.getElementById('card-left-display'),
         stackWrappers: document.querySelectorAll('.card-stack-wrapper'),
@@ -219,18 +306,20 @@
             document.getElementById('stack-img-2'),
             document.getElementById('stack-img-3')
         ],
-        readMoreBtn: document.getElementById('fern-read-more-btn'),
+        // 取得所有的 read-more 按鈕
+        readMoreBtns: document.querySelectorAll('.read-more-btn'),
         
         // 燈箱 1
         modal: document.getElementById('read-more-modal'),
-        modalImg: document.getElementById('read-more-content'),
+        modalImg: document.getElementById('modal1-bg'),
+        modalContent: document.getElementById('modal1-content-area'), // 🔴 內容注入區
         btnPlayMusic: document.getElementById('btn-play-music'),
         btnGainPoints: document.getElementById('btn-gain-points'),
         
         // 燈箱 2
         modal2: document.getElementById('gain-points-modal'),
-        modal2Img: document.getElementById('gain-points-content'),
-        // 🔴 新增：第二個播放按鈕參考
+        modal2Img: document.getElementById('modal2-bg'),
+        modal2Content: document.getElementById('modal2-content-area'), // 🔴 內容注入區
         btnPlayMusic2: document.getElementById('btn-play-music-2'),
 
         bgMusic: new Audio('wavs/Green Cloud Forest - Project - Curiosity of Nature 1.wav')
@@ -239,16 +328,10 @@
     function preloadAllAssets() {
         let imagesToLoad = [
             'images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 
-            'images/READ_MORE.png', 
-            'images/text_short.png',
-            'images/text_long.png', 
-            'images/PLAY_MUSIC.png', 
-            'images/GAIN_POINTS.png'
+            'images/READ_MORE.png', 'images/text_short.png', 'images/text_long.png', 
+            'images/PLAY_MUSIC.png', 'images/GAIN_POINTS.png'
         ];
-
-        for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
-        for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
-
+        // 動態載入物件圖
         const allObjects = [...CONFIG.land.objects, ...CONFIG.water.objects];
         allObjects.forEach(obj => {
             imagesToLoad.push(obj.src);
@@ -259,38 +342,35 @@
             imagesToLoad.push(`images/${obj.id}_card_3.png`);
         });
 
-        let loadedCount = 0;
-        const total = imagesToLoad.length;
-        if (total === 0) { startGame(); return; }
+        // 動態載入角色圖 (這裡簡略) ... (省略部分重複代碼，請保留您原本的迴圈)
+        for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
+        for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
 
+        let loadedCount = 0; const total = imagesToLoad.length;
+        if (total === 0) { startGame(); return; }
         imagesToLoad.forEach(src => {
-            const img = new Image();
-            img.src = src;
+            const img = new Image(); img.src = src;
             img.onload = () => { loadedCount++; updateLoadingProgress(loadedCount, total); };
-            img.onerror = () => { console.warn(`Failed to load: ${src}`); loadedCount++; updateLoadingProgress(loadedCount, total); };
+            img.onerror = () => { console.warn(`Failed: ${src}`); loadedCount++; updateLoadingProgress(loadedCount, total); };
         });
     }
-
     function updateLoadingProgress(current, total) {
         const percent = Math.floor((current / total) * 100);
-        el.loadingBar.style.width = `${percent}%`;
-        el.loadingText.textContent = `LOADING... ${percent}%`;
+        el.loadingBar.style.width = `${percent}%`; el.loadingText.textContent = `LOADING... ${percent}%`;
         if (current >= total) { setTimeout(startGame, 500); }
     }
-
     function startGame() {
-        el.loadingScreen.classList.add('fade-out');
-        el.gameStage.classList.add('ready');
+        el.loadingScreen.classList.add('fade-out'); el.gameStage.classList.add('ready');
         el.bgImg.onload = () => { render(); };
-        
         el.bgMusic.loop = true;
+        updateSceneAssets(); setupObjectInteractions(); setupCardSystem(); setupModals(); 
+        render(); setTimeout(() => { state.isLocked = false; }, 500);
+    }
 
-        updateSceneAssets();
-        setupObjectInteractions();
-        setupCardSystem();
-        setupModals(); 
-        render();
-        setTimeout(() => { state.isLocked = false; }, 500);
+    // 取得當前點擊的物件資料 helper
+    function getObjectDataById(id) {
+        const all = [...CONFIG.land.objects, ...CONFIG.water.objects];
+        return all.find(obj => obj.id === id);
     }
 
     function setupObjectInteractions() {
@@ -298,17 +378,11 @@
         objects.forEach(obj => {
             obj.addEventListener('mouseenter', () => {
                 let currentBg = obj.style.backgroundImage;
-                if (currentBg && currentBg.indexOf('-glow') === -1) {
-                    let newBg = currentBg.replace('.png', '-glow.png');
-                    obj.style.backgroundImage = newBg;
-                }
+                if (currentBg && currentBg.indexOf('-glow') === -1) obj.style.backgroundImage = currentBg.replace('.png', '-glow.png');
             });
             obj.addEventListener('mouseleave', () => {
                 let currentBg = obj.style.backgroundImage;
-                if (currentBg && currentBg.indexOf('-glow') !== -1) {
-                    let newBg = currentBg.replace('-glow.png', '.png');
-                    obj.style.backgroundImage = newBg;
-                }
+                if (currentBg && currentBg.indexOf('-glow') !== -1) obj.style.backgroundImage = currentBg.replace('-glow.png', '.png');
             });
             obj.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -320,157 +394,102 @@
     }
 
     function setupModals() {
-        // === 燈箱 1 (Short Text) ===
-        el.modalImg.addEventListener('click', (e) => {
-            e.stopPropagation();
-            el.modal.classList.toggle('zoomed');
+        // Modal 1
+        el.modalImg.addEventListener('click', (e) => { e.stopPropagation(); el.modal.classList.toggle('zoomed'); });
+        el.modal.addEventListener('click', () => { 
+            el.modal.classList.remove('show'); setTimeout(() => { el.modal.classList.remove('zoomed'); el.modal.scrollTop = 0; }, 300); stopMusic(); 
         });
 
-        // 關閉燈箱 1
-        el.modal.addEventListener('click', () => {
-            el.modal.classList.remove('show');
-            setTimeout(() => {
-                el.modal.classList.remove('zoomed');
-                el.modal.scrollTop = 0; 
-            }, 300);
-            
-            // 停止音樂
-            el.bgMusic.pause();
-            el.bgMusic.currentTime = 0; 
-            el.btnPlayMusic.classList.remove('playing');
-        });
+        el.btnPlayMusic.addEventListener('click', (e) => { e.stopPropagation(); toggleMusic(el.btnPlayMusic, el.btnPlayMusic2); });
 
-        // 播放按鈕 1
-        el.btnPlayMusic.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMusic(el.btnPlayMusic); // 呼叫共用播放函式
-        });
-
-        // Gain Points 按鈕 -> 切換到燈箱 2
+        // 🔴 Gain Points -> 打開 Modal 2 並載入長內容
         el.btnGainPoints.addEventListener('click', (e) => {
             e.stopPropagation();
-            el.modal.classList.remove('show');
-            el.modal.classList.remove('zoomed'); 
+            el.modal.classList.remove('show'); el.modal.classList.remove('zoomed'); stopMusic();
             
-            // 切換時暫停音樂
-            el.bgMusic.pause();
-            el.bgMusic.currentTime = 0; 
-            el.btnPlayMusic.classList.remove('playing');
+            // 載入長內容 HTML
+            if(state.currentActiveObj && state.currentActiveObj.content) {
+                el.modal2Content.innerHTML = state.currentActiveObj.content.longHtml;
+            }
 
             el.modal2.classList.add('show');
         });
 
-        // === 燈箱 2 (Long Text) ===
-        el.modal2Img.addEventListener('click', (e) => {
-            e.stopPropagation();
-            el.modal2.classList.toggle('zoomed');
+        // Modal 2
+        el.modal2Img.addEventListener('click', (e) => { e.stopPropagation(); el.modal2.classList.toggle('zoomed'); });
+        el.modal2.addEventListener('click', () => { 
+            el.modal2.classList.remove('show'); setTimeout(() => { el.modal2.classList.remove('zoomed'); el.modal2.scrollTop = 0; }, 300); stopMusic(); 
         });
 
-        // 關閉燈箱 2
-        el.modal2.addEventListener('click', () => {
-            el.modal2.classList.remove('show');
-            setTimeout(() => {
-                el.modal2.classList.remove('zoomed');
-                el.modal2.scrollTop = 0; 
-            }, 300);
-
-            // 🔴 關閉燈箱 2 時也要停止音樂
-            el.bgMusic.pause();
-            el.bgMusic.currentTime = 0; 
-            el.btnPlayMusic2.classList.remove('playing');
-        });
-
-        // 🔴 播放按鈕 2 (行為跟按鈕 1 一樣)
-        el.btnPlayMusic2.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleMusic(el.btnPlayMusic2);
-        });
+        el.btnPlayMusic2.addEventListener('click', (e) => { e.stopPropagation(); toggleMusic(el.btnPlayMusic2, el.btnPlayMusic); });
     }
 
-    // 🔴 抽出共用的音樂切換邏輯
-    function toggleMusic(btnElement) {
-        if (el.bgMusic.paused) {
-            el.bgMusic.play().catch(e => console.log(e));
-            btnElement.classList.add('playing');
-        } else {
-            el.bgMusic.pause();
-            el.bgMusic.currentTime = 0; 
-            btnElement.classList.remove('playing');
-        }
+    function toggleMusic(activeBtn, syncBtn) {
+        if (el.bgMusic.paused) { el.bgMusic.play().catch(e=>console.log(e)); activeBtn.classList.add('playing'); if(syncBtn) syncBtn.classList.add('playing'); }
+        else { el.bgMusic.pause(); el.bgMusic.currentTime = 0; activeBtn.classList.remove('playing'); if(syncBtn) syncBtn.classList.remove('playing'); }
     }
+    function stopMusic() { el.bgMusic.pause(); el.bgMusic.currentTime = 0; el.btnPlayMusic.classList.remove('playing'); el.btnPlayMusic2.classList.remove('playing'); }
 
     function setupCardSystem() {
         el.stackWrappers.forEach(wrapper => {
             wrapper.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (wrapper.getAttribute('data-layer') !== "1") {
-                    rotateStack(wrapper);
-                }
+                if (wrapper.getAttribute('data-layer') !== "1") rotateStack(wrapper);
             });
         });
-
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
-        
-        el.readMoreBtn.addEventListener('click', (e) => {
-             e.stopPropagation();
-             el.modal.classList.add('show');
+
+        // 🔴 綁定所有卡片上的 Read More 按鈕
+        el.readMoreBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // 載入短內容 HTML
+                if(state.currentActiveObj && state.currentActiveObj.content) {
+                    el.modalContent.innerHTML = state.currentActiveObj.content.shortHtml;
+                }
+                
+                el.modal.classList.add('show');
+            });
         });
     }
 
     function openCards(objectId) {
         state.isLocked = true;
+        // 🔴 儲存當前點擊的物件資料
+        state.currentActiveObj = getObjectDataById(objectId);
+
         el.cardLeft.src = `images/${objectId}_card_left.png`;
+        el.stackImages.forEach((img, index) => { img.src = `images/${objectId}_card_${index + 1}.png`; });
+        el.stackWrappers.forEach((wrapper, index) => { wrapper.setAttribute('data-layer', index + 1); });
 
-        el.stackImages.forEach((img, index) => {
-            img.src = `images/${objectId}_card_${index + 1}.png`;
-        });
-        el.stackWrappers.forEach((wrapper, index) => {
-             wrapper.setAttribute('data-layer', index + 1);
-        });
-
-        if (objectId === 'fern') {
-            el.readMoreBtn.classList.remove('hidden');
-        } else {
-            el.readMoreBtn.classList.add('hidden');
-        }
-
+        // 因為每個物件都有按鈕了，所以不需要控制 hidden，但可以根據需求保留
+        // 這裡我們直接顯示，因為按鈕已經在 HTML 裡了
         el.cardSystem.classList.add('show');
     }
 
-    function closeCards() {
-        state.isLocked = false;
-        el.cardSystem.classList.remove('show');
-    }
+    function closeCards() { state.isLocked = false; el.cardSystem.classList.remove('show'); }
 
     function rotateStack(clickedWrapper) {
         const layer1 = document.querySelector('.card-stack-wrapper[data-layer="1"]');
         const layer2 = document.querySelector('.card-stack-wrapper[data-layer="2"]');
         const layer3 = document.querySelector('.card-stack-wrapper[data-layer="3"]');
         const currentLayer = clickedWrapper.getAttribute('data-layer');
-
-        if (currentLayer === "2") {
-            clickedWrapper.setAttribute('data-layer', 1);
-            layer1.setAttribute('data-layer', 3);
-            layer3.setAttribute('data-layer', 2);
-        } else if (currentLayer === "3") {
-            clickedWrapper.setAttribute('data-layer', 1);
-            layer1.setAttribute('data-layer', 2);
-            layer2.setAttribute('data-layer', 3);
-        }
+        if (currentLayer === "2") { clickedWrapper.setAttribute('data-layer', 1); layer1.setAttribute('data-layer', 3); layer3.setAttribute('data-layer', 2); }
+        else if (currentLayer === "3") { clickedWrapper.setAttribute('data-layer', 1); layer1.setAttribute('data-layer', 2); layer2.setAttribute('data-layer', 3); }
     }
 
+    // Scroll Logic ... (保留原樣)
     window.addEventListener('wheel', (e) => {
-        if (state.isLocked) return; 
-        const moveDirection = e.deltaY > 0 ? 1 : -1;
-        const speed = 8; 
-        state.direction = moveDirection;
+        if (state.isLocked) return; e.preventDefault();
+        const moveDirection = e.deltaY > 0 ? 1 : -1; const speed = 8; state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
         if (!state.isWater) { if (nextCharX < 0) nextCharX = 0; } else { const maxRight = window.innerWidth - el.char.offsetWidth; if (nextCharX > maxRight) nextCharX = maxRight; }
         if (nextCharX !== state.charX) { state.charX = nextCharX; state.frameIndex += 0.25; }
-        if (moveDirection === 1) { if (!state.isWater && state.charX > window.innerWidth) { triggerTransition('toWater'); } } else { if (state.isWater && state.charX < -50) { triggerTransition('toLand'); } }
+        if (moveDirection === 1) { if (!state.isWater && state.charX > window.innerWidth) triggerTransition('toWater'); } else { if (state.isWater && state.charX < -50) triggerTransition('toLand'); }
         render();
-    });
+    }, { passive: false });
 
     function getSyncedBgX() {
         const stageWidth = window.innerWidth; const bgWidth = el.bgImg.offsetWidth || stageWidth; 
