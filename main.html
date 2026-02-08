@@ -8,18 +8,22 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: #000; font-family: sans-serif;
-            /* Safari 滾動優化 */
+            /* Safari 滾動優化：防止橡皮筋效果與觸控延遲 */
             overscroll-behavior: none; touch-action: none;
         }
 
-        /* Loading */
+        /* =========================================
+           UI: Loading
+           ========================================= */
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #1a1a1a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity 0.5s ease; }
         #loading-screen.fade-out { opacity: 0; pointer-events: none; }
         .loading-bar-container { width: 300px; height: 10px; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 20px; }
         .loading-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.1s linear; }
         .loading-text { font-size: 18px; letter-spacing: 2px; }
 
-        /* Stage */
+        /* =========================================
+           Stage & Objects
+           ========================================= */
         #game-stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
         #game-stage.ready { opacity: 1; }
         #scrolling-layer { position: absolute; top: 0; left: 0; height: 100%; will-change: transform; z-index: 1; }
@@ -34,7 +38,9 @@
         #transition-wave { position: fixed; left: 0; width: 100%; z-index: 999; pointer-events: none; height: 400%; top: 100%; background-image: url('images/wave.png'); background-size: cover; background-position: top center; transition: top 1.5s ease-in-out; }
         #transition-wave.active { top: -300%; }
 
-        /* Card System */
+        /* =========================================
+           Card System
+           ========================================= */
         #card-system {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000;
             background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -62,7 +68,7 @@
             opacity: 0; pointer-events: none; 
         }
         .read-more-btn:hover { transform: scale(1.1); }
-        /* 只有在第一層的卡片按鈕可以被點擊 */
+        /* 只有第一層的卡片按鈕可見 */
         .card-stack-wrapper[data-layer="1"] .read-more-btn { opacity: 1; pointer-events: auto; }
 
         .card-stack-wrapper[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); }
@@ -77,7 +83,9 @@
             #card-system.show .card-content-wrapper { transform: scale(0.85) !important; }
         }
 
-        /* Modal Styles */
+        /* =========================================
+           Modal (Lightboxes)
+           ========================================= */
         .fullscreen-modal {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 3000;
             background-color: rgba(0, 0, 0, 0.8);
@@ -89,7 +97,7 @@
         .modal-inner-wrapper { position: relative; display: inline-block; max-width: 100vw; max-height: 100vh; transition: width 0.3s ease; }
         .modal-bg-img { display: block; height: 95vh; width: auto; object-fit: contain; cursor: zoom-in; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
 
-        /* 動態內容區塊 */
+        /* Dynamic Content Area */
         .dynamic-content-area {
             position: absolute; top: 15%; left: 10%; width: 80%; height: 60%; 
             overflow-y: auto; color: #333; font-size: 1rem; line-height: 1.6; text-align: left; z-index: 15;
@@ -97,13 +105,17 @@
         }
         .dynamic-content-area::-webkit-scrollbar { display: none; }
         .dynamic-content-area h2 { margin-top: 0; color: #1a5f1a; font-size: 1.8rem; border-bottom: 2px solid #ccc; padding-bottom: 10px;}
+        .dynamic-content-area h3 { margin-top: 20px; color: #1a5f1a; font-size: 1.2rem; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .dynamic-content-area p { margin-bottom: 15px; }
         .dynamic-content-area img.content-pic { width: 100%; border-radius: 8px; margin: 10px 0; }
+        .dynamic-content-area ul { padding-left: 20px; margin-bottom: 15px; }
 
+        /* Zoomed State */
         .fullscreen-modal.zoomed { display: block; overflow-y: auto; text-align: center; }
         .fullscreen-modal.zoomed .modal-inner-wrapper { display: inline-block; width: 100vw; max-width: none; max-height: none; }
         .fullscreen-modal.zoomed .modal-bg-img { width: 100vw; height: auto; cursor: zoom-out; }
         
+        /* Modal Buttons */
         .modal-interactive-btn { position: absolute; z-index: 20; cursor: pointer; transition: transform 0.2s; }
         .modal-interactive-btn:hover { transform: scale(1.05); }
         .modal-interactive-btn.playing { filter: drop-shadow(0 0 10px #00ff00); }
@@ -111,7 +123,6 @@
         #btn-play-music, #btn-play-music-2 { bottom: 6%; left: 8%; width: 20%; }
         #btn-gain-points { bottom: 6%; right: 8%; width: 25%; }
 
-        /* 隱藏按鈕用 */
         .btn-hidden { display: none !important; }
 
     </style>
@@ -173,6 +184,9 @@
 </div>
 
 <script>
+    /* =========================================
+       DATA CONFIGURATION
+       ========================================= */
     const CONFIG = {
         land: {
             bg: 'images/green1.png',
@@ -182,72 +196,16 @@
                 { 
                     id: 'fern', src: 'images/fern.png', w: '150px', h: '150px', left: '5%', bottom: '40%',
                     content: [
-                        { // Card 1: 完整內容
-                            shortHtml: `
-                                <div style="margin-bottom: 20px;">
-                                    <p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;">
-                                        <span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>
-                                        Cloud Forest acts like a giant water tower of our planet?!
-                                    </p>
-                                    <h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2>
-                                </div>
-                                <img class="content-pic" src="images/fern_content_1.jpg" alt="Cloud Forest" style="margin-bottom: 5px;">
-                                <p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cloud forests can be anywhere as long as the conditions are met</p>
-                                <p>Cloud forests play a unique ecological role by capturing moisture not only through rainfall but also through humidity, mist and fog. These <b>horizontal water inputs</b> reduce solar radiation and temperature, shaping local conditions and limiting evapotranspiration. Despite being among the most biodiverse ecosystems on Earth, cloud forests occupy <b>less than 1%</b> of the planet and depend on precise combinations of altitude, temperature and high humidity.</p>
-                                <p>Today, they are rapidly disappearing due to monocultural agriculture, chemical practices and climate change. <b>Rising temperatures</b> are pushing cloud ceilings <b>higher</b>, leaving original vegetation exposed to <b>drier</b> conditions. Beyond their ecological value, cloud forests hold deep cultural significance, especially in Asia, where seas of clouds have long symbolised transcendence, beauty and the connection between earthly and celestial realms.</p>
-                                <p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to explore deeper into the clouds?</p>
-                            `,
-                            longHtml: `
-                                <div style="margin-bottom: 20px;">
-                                    <p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;">
-                                        <span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>
-                                        Cloud Forests inspired so many poets across millennia?!
-                                    </p>
-                                    <h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2>
-                                </div>
-                                <img class="content-pic" src="images/fern_content_2.jpg" alt="Mythical Woods" style="margin-bottom: 5px;">
-                                <p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Take a deep dive into the mythical woods</p>
-                                <p>The significance of precipitation to the recipient ecosystems is well-known but it’s limited to its <b>ferocity</b> (rain gauge in one time and depending on various types of soil, which signifies different capacity of absorption), categorised as <b>vertical</b> water effect. However, the <b>horizontal</b> layer matters too - the humidity in the air. Cloud Forests serve in this particular role. Clouds, mists and fogs can dramatically affect local environmental conditions including reductions of <b>solar radiation</b>, <b>temperature</b> and thereby <b>evapotranspiration</b>.</p>
-                                <p>While being the most biodiverse places on Earth, Cloud forests are becoming increasingly difficult to find due to environmental changes and human pressure. Accounting for <b>less than 1%</b> on Earth, they require a precise combination of factors : specific <b>temperature ranges</b>, high <b>humidity</b> and <b>drastic</b> change in <b>altitude</b>, which explains why it happens easily in tropical montane systems (in narrow definition) but on coastlines as well. In other words, the air masses are highly humid and the <b>adiabatic lapse rate</b> could guarantee the condensation point to be reached (the reason why clouds exist). As a result, they are dominated by <b>broad-leaved evergreen trees</b>, <b>epiphytes</b> and <b>epiphylls</b>.</p>
-                                <p>Due to excessive mono-cultural practises (e.g. EU recently reaccepted using Glyphosate for weed control - resulting in bracken dominated troubles years after) such as planting <b>tea plant</b> (Camellia sinensis) and <b>coffee</b> (Coffea), the most valuable agricultural commodities worldwide, this particular type of ecosystems is receding drastically in the last 2 decades. In addition, with Global Warming, the cloud ceiling is moving higher as a manifestation of a critical interaction between temperature and moisture supply. Some research in the Appalachians indicate the ceilings are deserting the original cloud forest vegetation which will be exposed in <b>drier</b> conditions thus disappearing indefinitely.</p>
-                                <p>Interestingly, the <b>ecotones</b> (adjacent systems on the border of 2 different ones) of Cloud Forests are <b>beautifully</b> unique, supporting rare assemblages of species, often fostering evolution & diversity in the long run and facilitating species <b>transition</b>, such as predator movement across different environments.</p>
-                                <p>From another perspective, this magical comb holds a grand significance in Asian cultures across millennia, representing aesthetic, spiritual and symbolic value. It’s the bridge between the earthly and celestial realms to many folktales and the inspirations to numerous great poets.</p>
-                                <p>These unique phenomena (Yunhai = Sea of Clouds) have been regarded as otherworldly scenes evoking feelings of peace and transcendence, a <b>cultural heritage</b> in human history.</p>
-                                <p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know what actions you can take to make a difference?</p>
-                            `
+                        { // Card 1 (Fern)
+                            shortHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cloud Forest acts like a giant water tower of our planet?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2></div><img class="content-pic" src="images/fern_content_1.jpg" alt="Cloud Forest" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cloud forests can be anywhere as long as the conditions are met</p><p>Cloud forests play a unique ecological role by capturing moisture not only through rainfall but also through humidity, mist and fog. These <b>horizontal water inputs</b> reduce solar radiation and temperature, shaping local conditions and limiting evapotranspiration. Despite being among the most biodiverse ecosystems on Earth, cloud forests occupy <b>less than 1%</b> of the planet and depend on precise combinations of altitude, temperature and high humidity.</p><p>Today, they are rapidly disappearing due to monocultural agriculture, chemical practices and climate change. <b>Rising temperatures</b> are pushing cloud ceilings <b>higher</b>, leaving original vegetation exposed to <b>drier</b> conditions. Beyond their ecological value, cloud forests hold deep cultural significance, especially in Asia, where seas of clouds have long symbolised transcendence, beauty and the connection between earthly and celestial realms.</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to explore deeper into the clouds?</p>`,
+                            longHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cloud Forests inspired so many poets across millennia?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2></div><img class="content-pic" src="images/fern_content_2.jpg" alt="Mythical Woods" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Take a deep dive into the mythical woods</p><p>The significance of precipitation to the recipient ecosystems is well-known but it’s limited to its <b>ferocity</b> (rain gauge in one time and depending on various types of soil, which signifies different capacity of absorption), categorised as <b>vertical</b> water effect. However, the <b>horizontal</b> layer matters too - the humidity in the air. Cloud Forests serve in this particular role. Clouds, mists and fogs can dramatically affect local environmental conditions including reductions of <b>solar radiation</b>, <b>temperature</b> and thereby <b>evapotranspiration</b>.</p><p>While being the most biodiverse places on Earth, Cloud forests are becoming increasingly difficult to find due to environmental changes and human pressure. Accounting for <b>less than 1%</b> on Earth, they require a precise combination of factors : specific <b>temperature ranges</b>, high <b>humidity</b> and <b>drastic</b> change in <b>altitude</b>, which explains why it happens easily in tropical montane systems (in narrow definition) but on coastlines as well. In other words, the air masses are highly humid and the <b>adiabatic lapse rate</b> could guarantee the condensation point to be reached (the reason why clouds exist). As a result, they are dominated by <b>broad-leaved evergreen trees</b>, <b>epiphytes</b> and <b>epiphylls</b>.</p><p>Due to excessive mono-cultural practises (e.g. EU recently reaccepted using Glyphosate for weed control - resulting in bracken dominated troubles years after) such as planting <b>tea plant</b> (Camellia sinensis) and <b>coffee</b> (Coffea), the most valuable agricultural commodities worldwide, this particular type of ecosystems is receding drastically in the last 2 decades. In addition, with Global Warming, the cloud ceiling is moving higher as a manifestation of a critical interaction between temperature and moisture supply. Some research in the Appalachians indicate the ceilings are deserting the original cloud forest vegetation which will be exposed in <b>drier</b> conditions thus disappearing indefinitely.</p><p>Interestingly, the <b>ecotones</b> (adjacent systems on the border of 2 different ones) of Cloud Forests are <b>beautifully</b> unique, supporting rare assemblages of species, often fostering evolution & diversity in the long run and facilitating species <b>transition</b>, such as predator movement across different environments.</p><p>From another perspective, this magical comb holds a grand significance in Asian cultures across millennia, representing aesthetic, spiritual and symbolic value. It’s the bridge between the earthly and celestial realms to many folktales and the inspirations to numerous great poets.</p><p>These unique phenomena (Yunhai = Sea of Clouds) have been regarded as otherworldly scenes evoking feelings of peace and transcendence, a <b>cultural heritage</b> in human history.</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know what actions you can take to make a difference?</p>`
                         },
-                        { // Card 2: 只有 Short
-                            shortHtml: `
-                                <h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">Cloud Forest Poetry –<br>Among the White Clouds</h2>
-                                <p>In Chinese poetry, cloud forests inspired numerous Tang Dynasty poets, including Du Mu, Wang Wei, Li Bai, and Han Shan. They are frequently depicted within <b>shanshui</b> (mountain and stream) poetry, emphasizing reclusion, the harmony between man and nature, and Taoist or Buddhist themes of emptiness and transcendence.</p>
-                                <img class="content-pic" src="images/fern_card2_content.jpg" alt="Shanshui Painting" style="margin: 20px 0;">
-                                <p>Cloud forests often appear in imagery such as "spitting mist" and "moss is slippery", reflecting the abundance of epiphytes found in these ecosystems. As written in <i>The Cold Mountain Poems</i>:</p>
-                                <div style="background-color: rgba(255,255,255,0.7); padding: 15px; border-left: 4px solid #555; margin: 20px 0; font-style: italic;">
-                                    <p style="margin: 0; font-family: serif;">"The long gorge choked with scree and boulders,<br>The wide creek, the mist blurred grass.<br><b>The moss is slippery, though there's been no rain,</b><br>The pine sings, but there's no wind.<br>Who can leap the world's ties<br>And sit with me among the white clouds?"</p>
-                                    <p style="margin-top: 10px; font-size: 0.9rem; color: #666; text-align: right;">— Han Shan (Cold Mountain)</p>
-                                </div>
-                                <p><b>Shanshui</b> paintings echo these same cloud forests, where mist erases boundaries between mountains, trees, and the human spirit. In both art and poetry, cloud forests are not just landscapes—they are places to disappear into.</p>
-                            `,
+                        { // Card 2 (Fern)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">Cloud Forest Poetry –<br>Among the White Clouds</h2><p>In Chinese poetry, cloud forests inspired numerous Tang Dynasty poets, including Du Mu, Wang Wei, Li Bai, and Han Shan. They are frequently depicted within <b>shanshui</b> (mountain and stream) poetry, emphasizing reclusion, the harmony between man and nature, and Taoist or Buddhist themes of emptiness and transcendence.</p><img class="content-pic" src="images/fern_card2_content.jpg" alt="Shanshui Painting" style="margin: 20px 0;"><p>Cloud forests often appear in imagery such as "spitting mist" and "moss is slippery", reflecting the abundance of epiphytes found in these ecosystems. As written in <i>The Cold Mountain Poems</i>:</p><div style="background-color: rgba(255,255,255,0.7); padding: 15px; border-left: 4px solid #555; margin: 20px 0; font-style: italic;"><p style="margin: 0; font-family: serif;">"The long gorge choked with scree and boulders,<br>The wide creek, the mist blurred grass.<br><b>The moss is slippery, though there's been no rain,</b><br>The pine sings, but there's no wind.<br>Who can leap the world's ties<br>And sit with me among the white clouds?"</p><p style="margin-top: 10px; font-size: 0.9rem; color: #666; text-align: right;">— Han Shan (Cold Mountain)</p></div><p><b>Shanshui</b> paintings echo these same cloud forests, where mist erases boundaries between mountains, trees, and the human spirit. In both art and poetry, cloud forests are not just landscapes—they are places to disappear into.</p>`,
                             longHtml: ``
                         },
-                        { // Card 3: 只有 Short
-                            shortHtml: `
-                                <h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 10px; color: #1a5f1a;">CLOUD FOREST –<br>WHAT YOU CAN DO</h2>
-                                <div style="margin-bottom: 20px;">
-                                    <p style="margin-bottom: 15px;"><b>1. Support regenerative agriculture products:</b><br>Purchase sustainably produced products from syntropic farms (e.g., regions like Kenya). <b>Agroforestry</b> and <b>Syntropic farming</b> integrate shade-tolerant crops—such as coffee and cacao—with native tree species. This helps protect biodiversity, improve soil health, and enhance environmental resilience.</p>
-                                    <p style="margin-bottom: 15px;"><b>2. Choose "ugly" fruits and vegetables:</b><br>Stop pursuing standardized, perfect appearances. Prioritise imperfect produce and accept seasonal yield variations. This is the most genuine way to protect regenerating land.</p>
-                                    <p style="margin-bottom: 10px;"><b>3. Choose products with sustainability certifications:</b><br>Look for these logos to support forest conservation, fair labor, and organic practices:</p>
-                                    <img class="content-pic" src="images/fern_card3_certs.jpg" alt="Sustainability Certifications" style="margin: 5px 0 15px 0; background: white; padding: 10px; border-radius: 8px;">
-                                    <ul style="padding-left: 20px; margin-bottom: 15px; font-size: 0.9rem; color: #444;">
-                                        <li><b>Rainforest Alliance:</b> Focuses on environmental protection and sustainable production.</li>
-                                        <li><b>Smithsonian Bird Friendly®:</b> Gold-standard for protecting bird habitats and shade cover.</li>
-                                        <li><b>Fair Trade:</b> Focuses on fair pricing and labor rights.</li>
-                                        <li><b>USDA Organic:</b> Grown without synthetic pesticides or GMOs.</li>
-                                    </ul>
-                                    <p style="margin-bottom: 15px;"><b>4. Support regulatory measures:</b><br>Support policies like the <b>EU Deforestation Regulation (EUDR)</b>, which requires companies to prove their products are not sourced from recently deforested land.</p>
-                                    <p><b>5. Promote whole-plant utilization:</b><br>Choose products that use agricultural by-products—such as <b>cascara</b> (coffee cherry tea), reused coffee grounds, or cacao husks. This increases farm income and reduces the pressure to clear new land.</p>
-                                </div>
-                            `,
+                        { // Card 3 (Fern)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 10px; color: #1a5f1a;">CLOUD FOREST –<br>WHAT YOU CAN DO</h2><div style="margin-bottom: 20px;"><p style="margin-bottom: 15px;"><b>1. Support regenerative agriculture products:</b><br>Purchase sustainably produced products from syntropic farms (e.g., regions like Kenya). <b>Agroforestry</b> and <b>Syntropic farming</b> integrate shade-tolerant crops—such as coffee and cacao—with native tree species. This helps protect biodiversity, improve soil health, and enhance environmental resilience.</p><p style="margin-bottom: 15px;"><b>2. Choose "ugly" fruits and vegetables:</b><br>Stop pursuing standardized, perfect appearances. Prioritise imperfect produce and accept seasonal yield variations. This is the most genuine way to protect regenerating land.</p><p style="margin-bottom: 10px;"><b>3. Choose products with sustainability certifications:</b><br>Look for these logos to support forest conservation, fair labor, and organic practices:</p><img class="content-pic" src="images/fern_card3_certs.jpg" alt="Sustainability Certifications" style="margin: 5px 0 15px 0; background: white; padding: 10px; border-radius: 8px;"><ul style="padding-left: 20px; margin-bottom: 15px; font-size: 0.9rem; color: #444;"><li><b>Rainforest Alliance:</b> Focuses on environmental protection and sustainable production.</li><li><b>Smithsonian Bird Friendly®:</b> Gold-standard for protecting bird habitats and shade cover.</li><li><b>Fair Trade:</b> Focuses on fair pricing and labor rights.</li><li><b>USDA Organic:</b> Grown without synthetic pesticides or GMOs.</li></ul><p style="margin-bottom: 15px;"><b>4. Support regulatory measures:</b><br>Support policies like the <b>EU Deforestation Regulation (EUDR)</b>, which requires companies to prove their products are not sourced from recently deforested land.</p><p><b>5. Promote whole-plant utilization:</b><br>Choose products that use agricultural by-products—such as <b>cascara</b> (coffee cherry tea), reused coffee grounds, or cacao husks. This increases farm income and reduces the pressure to clear new land.</p></div>`,
                             longHtml: ``
                         }
                     ]
@@ -255,9 +213,18 @@
                 { 
                     id: 'flower', src: 'images/flower.png', w: '150px', h: '150px', left: '40%', bottom: '10%',
                     content: [
-                        { shortHtml: `<h2>🌸 Flower Card 1</h2><p>Content for flower card 1...</p>`, longHtml: `<h2>🌺 Flower Long</h2><p>Long content...</p>` },
-                        { shortHtml: `<h2>🐝 Flower Card 2</h2><p>Content for flower card 2...</p>`, longHtml: `` },
-                        { shortHtml: `<h2>☀️ Flower Card 3</h2><p>Content for flower card 3...</p>`, longHtml: `` }
+                        { // Card 1 (Flower = Fern Content)
+                            shortHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cloud Forest acts like a giant water tower of our planet?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2></div><img class="content-pic" src="images/flower_content_1.jpg" alt="Cloud Forest" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cloud forests can be anywhere as long as the conditions are met</p><p>Cloud forests play a unique ecological role by capturing moisture not only through rainfall but also through humidity, mist and fog. These <b>horizontal water inputs</b> reduce solar radiation and temperature, shaping local conditions and limiting evapotranspiration.</p><p>Despite being among the most biodiverse ecosystems on Earth, cloud forests occupy <b>less than 1%</b> of the planet and depend on precise combinations of altitude, temperature and high humidity.</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to explore deeper into the clouds?</p>`,
+                            longHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cloud Forests inspired so many poets across millennia?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE MAGICAL COMB –<br>CLOUD FORESTS</h2></div><img class="content-pic" src="images/flower_content_2.jpg" alt="Mythical Woods" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Take a deep dive into the mythical woods</p><p>The significance of precipitation to the recipient ecosystems is well-known but it’s limited to its <b>ferocity</b> (rain gauge in one time and depending on various types of soil), categorised as <b>vertical</b> water effect. However, the <b>horizontal</b> layer matters too - the humidity in the air.</p><p>Cloud Forests serve in this particular role. Clouds, mists and fogs can dramatically affect local environmental conditions including reductions of <b>solar radiation</b>, <b>temperature</b> and thereby <b>evapotranspiration</b>.</p><p>While being the most biodiverse places on Earth, Cloud forests are becoming increasingly difficult to find. They require a precise combination of factors: specific <b>temperature ranges</b>, high <b>humidity</b> and <b>drastic</b> change in <b>altitude</b>.</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know what actions you can take?</p>`
+                        },
+                        { // Card 2 (Mirage)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">Mirages –<br>Idioms Behind Nature’s Illusion</h2><p>Mirages are more common than you think, if not in nature, then certainly in language. Across different cultures, mirages frequently appear in idioms serving as metaphors for <b>illusion</b>, <b>false hope</b> or <b>unattainable goals</b>.</p><img class="content-pic" src="images/flower_card2_content.jpg" alt="Mirage Illusion" style="margin: 20px 0;"><div style="background-color: rgba(255,255,255,0.7); padding: 15px; border-left: 4px solid #555; margin: 20px 0;"><p style="margin-bottom: 10px;"><b>🇨🇳 Chinese:</b><br><b>海市蜃楼 (Hǎi shì shèn lóu)</b>: Meaning "city of the sea, towers of the mirage-monster". In mythology, <i>shèn</i> is a sea monster that exhales vapour to form illusory cities.</p><p style="margin-bottom: 10px;"><b>🇬🇧 English / 🇪🇸 Spanish / 🇫🇷 French:</b><br>Expressions like "chasing a mirage" or <i>correr tras espejismos</i> suggest pursuing something unreal or unachievable.</p><p style="margin: 0;"><b>🇮🇳 Hindi:</b><br><b>मृगतृष्णा (Mrigtrishna)</b>: Literally "deer’s thirst", referring to a desert mirage that deceives deer into seeking water—symbolizing the relentless pursuit of an illusion.</p></div><p>Across cultures, the mirage endures as a powerful image of elusive beauty. In language, as in life, mirages mark the fine line between promise and illusion.</p>`,
+                            longHtml: ``
+                        },
+                        { // Card 3 (Mirage Action)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">MIRAGES –<br>WANT TO WITNESS AN ILLUSION?</h2><p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">Want to witness a natural illusion with your own eyes?</p><img class="content-pic" src="images/flower_card3_content.jpg" alt="Witnessing Mirage" style="margin-bottom: 20px;"><div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; border: 1px solid #ddd;"><p style="margin-bottom: 15px;">💡 <b>Tip:</b> Always keep your eyes open, mirages can appear and disappear in a matter of minutes!</p><ul style="padding-left: 20px; line-height: 1.8;"><li><b>⏳ Timing:</b><br>Dawn or dusk is the best time as temperatures are rapidly changing.</li><li style="margin-top: 10px;"><b>📍 Location:</b><br>Mountainous areas (drastic difference of altitude), deserts (or big surfaces of hot areas), and naturally big surfaces of water.</li></ul></div>`,
+                            longHtml: ``
+                        }
                     ]
                 }
             ]
@@ -270,23 +237,35 @@
                 { 
                     id: 'jellyfish', src: 'images/jellyfish.png', w: '150px', h: '150px', left: '40%', bottom: '50%',
                     content: [
-                        { shortHtml: `<h2>👾 Jellyfish Card 1</h2><p>Content 1...</p>`, longHtml: `<h2>🌊 Jellyfish Long</h2><p>Long...</p>` },
-                        { shortHtml: `<h2>⚡ Jellyfish Card 2</h2><p>Content 2...</p>`, longHtml: `` },
-                        { shortHtml: `<h2>💡 Jellyfish Card 3</h2><p>Content 3...</p>`, longHtml: `` }
+                        { // Card 1 (Cyanobacteria)
+                            shortHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cyanobacteria are responsible for producing much of the oxygen in Earth’s atmosphere, including the oxygen you are breathing right now?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">EARTH’S GREEN PIONEERS –<br>CYANOBACTERIA</h2></div><img class="content-pic" src="images/jellyfish_content_1.jpg" alt="Cyanobacteria" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cyanobacteria - the powerful Atmospheric Architects</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know more?</p>`,
+                            longHtml: `<div style="margin-bottom: 20px;"><p style="font-size: 0.9rem; border-left: 4px solid #000; padding-left: 10px; line-height: 1.4;"><span style="font-weight: 900; text-transform: uppercase;">Fun Fact: Did you know?</span><br>Cyanobacteria can be scientifically categorised as the evolutionary ancestors of algae?!</p><h2 style="font-weight: 900; text-transform: uppercase; font-size: 2rem; line-height: 1.1; margin-top: 15px; border-bottom: none;">THE ANCESTORS OF ALGAE –<br>CYANOBACTERIA</h2></div><img class="content-pic" src="images/jellyfish_content_2.jpg" alt="Blue-Green Generators" style="margin-bottom: 5px;"><p style="font-size: 0.8rem; font-style: italic; color: #555; margin-bottom: 20px;">Cyanobacteria - The Blue-Green Generators</p><h3 style="color: #1a5f1a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;">Characteristics and Morphology</h3><p>Cyanobacteria possess <b>chlorophyll-a</b>, which provides their characteristic green colour, alongside pigments such as phycocyanin (blue) and phycoerythrin (red), enabling them <b>to absorb various wavelengths of light</b>. They exist in diverse forms, ranging from unicellular to filamentous colonies. Many species possess gas vesicles, allowing them to regulate buoyancy and move vertically in the water column to maximise sunlight exposure and access nutrients. Additionally, some species can fix nitrogen from the atmosphere into usable chemical forms (like ammonia) using specialised cells called <b>heterocyst</b>.</p><h3 style="color: #1a5f1a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;">Habitat and Ecological Importance</h3><p>These microorganisms are ubiquitously found in <b>aquatic</b> environments, including freshwater, marine, and coastal waters, as well as in soil and on rock surfaces. They are fundamental components of marine food webs and major contributors to global <b>carbon and nitrogen</b> cycles. Furthermore, they have <b>symbiotic relationships</b> with various organisms, such as <b>lichens and ferns</b>, and can survive in extreme habitats, from hot springs to frozen environments.</p><h3 style="color: #1a5f1a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;">Role in Ecosystems and Human Health</h3><p>While generally beneficial as primary producers, cyanobacteria are also infamous for forming dense "blooms" in nutrient-rich (eutrophic), warm, and stagnant waters. These, often referred to as Harmful Algal Blooms (HABs), occur due to excess nutrients like phosphorus and nitrogen. Such blooms can cause significant environmental and economic issues by producing potent toxins, known as <b>cyano-toxins</b>, which can <b>damage liver and brain function</b> in humans, livestock, and wildlife.</p><h3 style="color: #1a5f1a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;">Applications and Biotechnology</h3><p>Beyond their environmental impacts, cyanobacteria are valuable resources in <b>biotechnology</b> and <b>sustainable agriculture</b>. They are used as biofertilizers in rice paddies and for bioremediation, such as <b>treating wastewater</b>. Certain species, like <b>Spirulina</b>, are consumed as food, while others are studied for producing bioenergy, valuable metabolites, and in ecological restoration of degraded lands.</p><h3 style="color: #1a5f1a; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-top: 20px;">Evolutionary Significance</h3><p>Cyanobacteria are widely believed to be the <b>ancestors of the chloroplast</b> in eukaryotic cells, which evolved through a process called endosymbiosis. Their ability to photosynthesise and create oxygen changed the Earth's early reducing atmosphere into an oxidising one, leading to <b>the development of complex life</b>.</p><p style="font-weight: bold; margin-top: 30px; margin-bottom: 60px;">Want to know what actions you can take to prevent Algal bloom?</p>`
+                        },
+                        { // Card 2 (Stromatolites)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">CYANOBACTERIA –<br>OLDEST FORMS OF LIFE ON EARTH</h2><p>The oldest fossilized evidence of life on Earth are <b>stromatolites</b>. They are layered sedimentary rock formations created over 3.5 billion years ago by photosynthetic cyanobacteria. By trapping sediment and precipitating calcium carbonate, these organisms built distinct rocky mounds that thrived, dominated and oxygenated the atmosphere, ultimately triggering the Great Oxidation Event.</p><img class="content-pic" src="images/jellyfish_card2_content.jpg" alt="Stromatolites" style="margin: 20px 0;"><p>Stromatolites are made up of successive layers of microbes growing over older, trapped sediments. This distinctive layered structure is what earned them the name of "rock mattresses".</p><p>Often referred to as "living fossils", stromatolites still exist today, though they are rare. Modern examples can be found along the coast of Australia, in Yellowstone National Park and in certain saline lakes around the world.</p><div style="background-color: rgba(255,255,255,0.7); padding: 15px; border-left: 4px solid #555; margin: 20px 0;"><p style="margin: 0;"><b>💡 Fun fact!</b> Stromatolites are representatives of life before dinosaurs!</p></div>`,
+                            longHtml: ``
+                        },
+                        { // Card 3 (Marine Dead Zone)
+                            shortHtml: `<h2 style="font-weight: 900; text-transform: uppercase; font-size: 1.8rem; line-height: 1.2; margin-bottom: 20px; color: #1a5f1a;">MARINE DEAD ZONE –<br>ACTIONS</h2><div style="margin-bottom: 20px;"><p style="margin-bottom: 15px;"><b>1. Support organic and regenerative agriculture:</b><br>Look for labels like <b>USDA Organic</b>, <b>EU Organic Leaf</b>, <b>Regenerative Organic Certified (ROC)</b>. These standards avoid synthetic inputs (pesticides, fertilisers) and prioritise soil health restoration.</p><p style="margin-bottom: 15px;"><b>2. Reduce phosphorus in detergents:</b><br>Many detergents are now phosphate-free to protect waterways. Look for brands like Tide, Gain, Seventh Generation, or certifications like "EWG Verified".</p><p style="margin-bottom: 15px;"><b>3. Cut back on meat consumption:</b><br>Choose eco-friendly options like Mussels/Oysters, chicken, or wild game. Look for <b>Regenerative agriculture</b>, <b>Pasture-raised</b>, or <b>Grass-fed</b> labels.</p><p style="margin-bottom: 15px;"><b>4. Choose eco-certified seafood:</b><br>Look for <b>MSC</b> (wild-caught) or <b>ASC</b> (farmed) certifications to ensure healthy fish populations and minimal ecosystem impact.</p><img class="content-pic" src="images/jellyfish_card3_content.jpg" alt="Action Labels" style="margin: 20px 0; background: white; padding: 10px; border-radius: 8px;"><div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; border: 1px solid #ddd; margin-top: 20px;"><h3 style="margin-top: 0; color: #1a5f1a; font-size: 1.2rem;">Exploring Ocean Dead Zones</h3><p style="margin-bottom: 5px;"><b>Where?</b> Coastal waters and river mouths (e.g., Gulf of Mexico).</p><p style="margin-bottom: 5px;"><b>When?</b> Most severe in summer (warm water blocks oxygen mixing).</p><p style="margin-bottom: 0;"><b>What to look for?</b> Disappearing fish and mass die-offs. Below the surface, they are oxygen-depleted and barren.</p></div></div>`,
+                            longHtml: ``
+                        }
                     ]
                 },
                 { 
                     id: 'fish', src: 'images/fish.png', w: '200px', h: '200px', left: '70%', bottom: '70%',
                     content: [
-                        { shortHtml: `<h2>🐠 Fish Card 1</h2><p>Content 1...</p>`, longHtml: `<h2>🏰 Fish Long</h2><p>Long...</p>` },
-                        { shortHtml: `<h2>🐟 Fish Card 2</h2><p>Content 2...</p>`, longHtml: `` },
-                        { shortHtml: `<h2>🦈 Fish Card 3</h2><p>Content 3...</p>`, longHtml: `` }
+                        { shortHtml: `<h2>🐠 Fish Card 1</h2><p>Content 1... 🚧 待補資料</p>`, longHtml: `<h2>🏰 Fish Long</h2><p>Long... 🚧 待補資料</p>` },
+                        { shortHtml: `<h2>🐟 Fish Card 2</h2><p>Content 2... 🚧 待補資料</p>`, longHtml: `` },
+                        { shortHtml: `<h2>🦈 Fish Card 3</h2><p>Content 3... 🚧 待補資料</p>`, longHtml: `` }
                     ]
                 }
             ]
         }
     };
 
+    /* =========================================
+       STATE & ELEMENTS
+       ========================================= */
     const state = { isWater: false, isLocked: true, charX: 50, frameIndex: 1, direction: 1, currentActiveObj: null, currentCardIndex: 0 };
 
     const el = {
@@ -325,11 +304,18 @@
         bgMusic: new Audio('wavs/Green Cloud Forest - Project - Curiosity of Nature 1.wav')
     };
 
+    /* =========================================
+       LOGIC: PRELOAD & INIT
+       ========================================= */
     function preloadAllAssets() {
         let imagesToLoad = [
             'images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 
             'images/READ_MORE.png', 'images/text_short.png', 'images/text_long.png', 
-            'images/PLAY_MUSIC.png', 'images/GAIN_POINTS.png'
+            'images/PLAY_MUSIC.png', 'images/GAIN_POINTS.png',
+            // 預載內容圖片
+            'images/fern_content_1.jpg', 'images/fern_content_2.jpg', 'images/fern_card2_content.jpg', 'images/fern_card3_certs.jpg',
+            'images/flower_content_1.jpg', 'images/flower_content_2.jpg', 'images/flower_card2_content.jpg', 'images/flower_card3_content.jpg',
+            'images/jellyfish_content_1.jpg', 'images/jellyfish_content_2.jpg', 'images/jellyfish_card2_content.jpg', 'images/jellyfish_card3_content.jpg'
         ];
         const allObjects = [...CONFIG.land.objects, ...CONFIG.water.objects];
         allObjects.forEach(obj => {
@@ -348,7 +334,7 @@
         imagesToLoad.forEach(src => {
             const img = new Image(); img.src = src;
             img.onload = () => { loadedCount++; updateLoadingProgress(loadedCount, total); };
-            img.onerror = () => { console.warn(`Failed: ${src}`); loadedCount++; updateLoadingProgress(loadedCount, total); };
+            img.onerror = () => { console.warn(`Failed to load: ${src}`); loadedCount++; updateLoadingProgress(loadedCount, total); };
         });
     }
     function updateLoadingProgress(current, total) {
@@ -389,38 +375,62 @@
         });
     }
 
+    /* =========================================
+       LOGIC: MODAL & MUSIC
+       ========================================= */
     function setupModals() {
+        // --- Modal 1 ---
         el.modalImg.addEventListener('click', (e) => { e.stopPropagation(); el.modal.classList.toggle('zoomed'); });
         el.modal.addEventListener('click', () => { 
             el.modal.classList.remove('show'); setTimeout(() => { el.modal.classList.remove('zoomed'); el.modal.scrollTop = 0; }, 300); stopMusic(); 
         });
 
+        // Play Music Btn 1
         el.btnPlayMusic.addEventListener('click', (e) => { e.stopPropagation(); toggleMusic(el.btnPlayMusic, el.btnPlayMusic2); });
 
+        // Gain Points Btn (前往第二層)
         el.btnGainPoints.addEventListener('click', (e) => {
             e.stopPropagation();
-            el.modal.classList.remove('show'); el.modal.classList.remove('zoomed'); stopMusic();
+            // 關閉第一層
+            el.modal.classList.remove('show'); el.modal.classList.remove('zoomed'); 
+            stopMusic(); // 切換時停止音樂
+            
+            // 載入第二層內容
             if(state.currentActiveObj && state.currentActiveObj.content) {
                 const cardContent = state.currentActiveObj.content[state.currentCardIndex];
                 if(cardContent) el.modal2Content.innerHTML = cardContent.longHtml;
             }
+            // 打開第二層
             el.modal2.classList.add('show');
         });
 
+        // --- Modal 2 ---
         el.modal2Img.addEventListener('click', (e) => { e.stopPropagation(); el.modal2.classList.toggle('zoomed'); });
         el.modal2.addEventListener('click', () => { 
             el.modal2.classList.remove('show'); setTimeout(() => { el.modal2.classList.remove('zoomed'); el.modal2.scrollTop = 0; }, 300); stopMusic(); 
         });
 
+        // Play Music Btn 2
         el.btnPlayMusic2.addEventListener('click', (e) => { e.stopPropagation(); toggleMusic(el.btnPlayMusic2, el.btnPlayMusic); });
     }
 
     function toggleMusic(activeBtn, syncBtn) {
-        if (el.bgMusic.paused) { el.bgMusic.play().catch(e=>console.log(e)); activeBtn.classList.add('playing'); if(syncBtn) syncBtn.classList.add('playing'); }
-        else { el.bgMusic.pause(); el.bgMusic.currentTime = 0; activeBtn.classList.remove('playing'); if(syncBtn) syncBtn.classList.remove('playing'); }
+        if (el.bgMusic.paused) { 
+            el.bgMusic.play().catch(e=>console.log(e)); 
+            activeBtn.classList.add('playing'); if(syncBtn) syncBtn.classList.add('playing'); 
+        } else { 
+            el.bgMusic.pause(); el.bgMusic.currentTime = 0; 
+            activeBtn.classList.remove('playing'); if(syncBtn) syncBtn.classList.remove('playing'); 
+        }
     }
-    function stopMusic() { el.bgMusic.pause(); el.bgMusic.currentTime = 0; el.btnPlayMusic.classList.remove('playing'); el.btnPlayMusic2.classList.remove('playing'); }
+    function stopMusic() { 
+        el.bgMusic.pause(); el.bgMusic.currentTime = 0; 
+        el.btnPlayMusic.classList.remove('playing'); el.btnPlayMusic2.classList.remove('playing'); 
+    }
 
+    /* =========================================
+       LOGIC: CARD SYSTEM
+       ========================================= */
     function setupCardSystem() {
         el.stackWrappers.forEach(wrapper => {
             wrapper.addEventListener('click', (e) => {
@@ -431,22 +441,22 @@
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
 
+        // Read More Buttons Logic
         el.readMoreBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 
+                // 1. 取得 Index (0, 1, 2)
                 const index = parseInt(e.target.getAttribute('data-card-index'));
                 state.currentCardIndex = index; 
 
-                // 載入內容
+                // 2. 載入 Short HTML
                 if(state.currentActiveObj && state.currentActiveObj.content) {
                     const cardContent = state.currentActiveObj.content[index];
-                    if(cardContent) {
-                        el.modalContent.innerHTML = cardContent.shortHtml;
-                    }
+                    if(cardContent) el.modalContent.innerHTML = cardContent.shortHtml;
                 }
 
-                // 🔴 判斷是否顯示 Gain Points 按鈕 (只有 Card 1 有)
+                // 3. 判斷 Gain Points 按鈕顯示 (僅 Index 0 顯示)
                 if (index === 0) { 
                     el.btnGainPoints.classList.remove('btn-hidden');
                 } else {
@@ -480,15 +490,18 @@
         else if (currentLayer === "3") { clickedWrapper.setAttribute('data-layer', 1); layer1.setAttribute('data-layer', 2); layer2.setAttribute('data-layer', 3); }
     }
 
+    /* =========================================
+       LOGIC: SCROLL & RENDER
+       ========================================= */
     window.addEventListener('wheel', (e) => {
-        if (state.isLocked) return; e.preventDefault();
+        if (state.isLocked) return; e.preventDefault(); // Safari fix
         const moveDirection = e.deltaY > 0 ? 1 : -1; const speed = 8; state.direction = moveDirection;
         let nextCharX = state.charX + (moveDirection === 1 ? speed : -speed);
         if (!state.isWater) { if (nextCharX < 0) nextCharX = 0; } else { const maxRight = window.innerWidth - el.char.offsetWidth; if (nextCharX > maxRight) nextCharX = maxRight; }
         if (nextCharX !== state.charX) { state.charX = nextCharX; state.frameIndex += 0.25; }
         if (moveDirection === 1) { if (!state.isWater && state.charX > window.innerWidth) triggerTransition('toWater'); } else { if (state.isWater && state.charX < -50) triggerTransition('toLand'); }
         render();
-    }, { passive: false });
+    }, { passive: false }); // Safari fix
 
     function getSyncedBgX() {
         const stageWidth = window.innerWidth; const bgWidth = el.bgImg.offsetWidth || stageWidth; 
