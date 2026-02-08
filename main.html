@@ -15,14 +15,14 @@
             font-family: sans-serif;
         }
 
-        /* ... (省略 Loading 畫面樣式，保持不變) ... */
+        /* Loading 畫面 */
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #1a1a1a; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; transition: opacity 0.5s ease; }
         #loading-screen.fade-out { opacity: 0; pointer-events: none; }
         .loading-bar-container { width: 300px; height: 10px; background-color: #333; border-radius: 5px; overflow: hidden; margin-top: 20px; }
         .loading-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.1s linear; }
         .loading-text { font-size: 18px; letter-spacing: 2px; }
 
-        /* ... (省略遊戲舞台基礎樣式，保持不變) ... */
+        /* 遊戲舞台 */
         #game-stage { position: relative; width: 100vw; height: 100vh; overflow: hidden; opacity: 0; transition: opacity 0.5s ease; }
         #game-stage.ready { opacity: 1; }
         #scrolling-layer { position: absolute; top: 0; left: 0; height: 100%; will-change: transform; z-index: 1; }
@@ -32,11 +32,11 @@
         .scene-obj:hover { animation-play-state: paused; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); }
         #obj1 { animation-duration: 3.5s; animation-delay: 0s; }
         #obj2 { animation-duration: 5s; animation-delay: 1.5s; }
-        #character { position: absolute; bottom: 10%; left: 0; z-index: 10; width: 109.6px; height: 180px; background-repeat: no-repeat; background-size: contain; background-position: center bottom; transition: width 0.1s, height 0.1s; }
+        #character { position: absolute; bottom: 10%; left: 0; z-index: 10; background-repeat: no-repeat; background-size: contain; background-position: center bottom; transition: width 0.1s, height 0.1s; }
         #transition-wave { position: fixed; left: 0; width: 100%; z-index: 999; pointer-events: none; height: 400%; top: 100%; background-image: url('images/wave.png'); background-size: cover; background-position: top center; transition: top 1.5s ease-in-out; }
         #transition-wave.active { top: -300%; }
 
-        /* 卡片系統容器 */
+        /* 卡片系統 */
         #card-system {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2000;
             background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -51,65 +51,53 @@
         }
         #card-system.show .card-content-wrapper { transform: scale(1); opacity: 1; }
 
-        /* 左右區塊容器 */
         .card-left-section, .card-right-section {
-            width: 350px;
-            /* height: 525px;  <-- 🔴 移除固定高度，讓它隨內容撐開 (為了容納按鈕) */
-            position: relative;
-            /* 🔴 確保右側容器有足夠空間顯示下方按鈕 */
-            min-height: 600px; 
-            display: flex; /* 🔴 讓內部元素更容易對齊 */
-            justify-content: center;
+            width: 350px; position: relative; min-height: 600px; display: flex; justify-content: center;
         }
 
-        /* 左側圖片樣式 */
         .card-left-img {
-            width: 100%; height: 525px; /* 🔴 固定圖片高度 */
-            object-fit: fill; background-color: transparent;
+            width: 100%; height: 525px; object-fit: fill; background-color: transparent;
             filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5)); cursor: default;
         }
 
-        /* =========================================
-           🔴 新增：右側堆疊卡片容器樣式
-           ========================================= */
+        /* 右側堆疊卡片容器 */
         .card-stack-wrapper {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            /* 不設固定高度，讓它包住圖片和按鈕 */
-            display: flex;
-            flex-direction: column; /* 垂直排列 */
-            align-items: center;    /* 水平置中 */
-            cursor: pointer;
+            position: absolute; top: 0; left: 0; width: 100%; 
+            /* 這裡很重要，因為按鈕是 absolute，父容器要是 relative (或 absolute) */
+            height: 525px; /* 這裡要跟圖片一樣高，才能定位準確 */
+            
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
             transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), z-index 0s;
         }
 
-        /* 堆疊卡片裡的圖片樣式 */
         .card-stack-img {
-            width: 100%; height: 525px; /* 🔴 固定圖片高度 */
-            object-fit: fill;
-            background-color: transparent;
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
-            transition: filter 0.5s; /* filter 效果移到這裡 */
+            width: 100%; height: 100%; object-fit: fill; background-color: transparent;
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: filter 0.5s;
         }
 
-        /* 🔴 新增：Read More 按鈕樣式 */
+        /* 🔴 修改：Read More 按鈕樣式 (重疊版) */
         .read-more-btn {
-            margin-top: 25px; /* 與卡片的距離 */
-            width: 200px;     /* 按鈕寬度，可自行調整 */
+            position: absolute; /* 絕對定位，脫離文件流 */
+            bottom: 20px;       /* 距離底部 20px */
+            left: 50%;          /* 水平置中 */
+            transform: translateX(-50%); /* 修正置中偏移 */
+            
+            width: 200px;       /* 按鈕寬度 */
             height: auto;
             cursor: pointer;
+            z-index: 10;        /* 確保在卡片圖片上面 */
+            
             transition: transform 0.2s ease, opacity 0.3s ease;
         }
-        .read-more-btn:hover { transform: scale(1.05); }
         
-        /* 🔴 新增：隱藏用的 class */
-        .hidden {
-            display: none !important;
-            opacity: 0;
+        /* Hover 時放大一點點，注意要保留 translateX(-50%) */
+        .read-more-btn:hover { 
+            transform: translateX(-50%) scale(1.05); 
         }
+        
+        .hidden { display: none !important; opacity: 0; }
 
-        /* 堆疊邏輯 (應用在 wrapper 上) */
+        /* 堆疊邏輯 */
         .card-stack-wrapper[data-layer="1"] { z-index: 3; transform: translateX(0px) scale(1); }
         .card-stack-wrapper[data-layer="1"] .card-stack-img { filter: brightness(1) drop-shadow(0 15px 25px rgba(0,0,0,0.5)); }
         
@@ -146,22 +134,17 @@
             <div class="card-left-section">
                 <img id="card-left-display" class="card-left-img" src="" alt="Intro Card">
             </div>
-            
             <div class="card-right-section">
-                
                 <div class="card-stack-wrapper" data-layer="1">
                     <img class="card-stack-img" id="stack-img-1" src="" alt="Card 1">
-                    <img id="fern-read-more-btn" class="read-more-btn hidden" src="images/read_more_btn.png" alt="Read More">
+                    <img id="fern-read-more-btn" class="read-more-btn hidden" src="images/READ_MORE.png" alt="Read More">
                 </div>
-
                 <div class="card-stack-wrapper" data-layer="2">
                     <img class="card-stack-img" id="stack-img-2" src="" alt="Card 2">
                 </div>
-
                 <div class="card-stack-wrapper" data-layer="3">
                     <img class="card-stack-img" id="stack-img-3" src="" alt="Card 3">
                 </div>
-
             </div>
         </div>
     </div>
@@ -182,7 +165,7 @@
         },
         water: {
             bg: 'images/blue1.png',
-            dims: { w: '323.43px', h: '260.62px' },
+            dims: { w: '323.43px', h: '260.62px' }, 
             frames: 7,
             pathPrefix: 'svgs/Swim_man_',
             ext: '.svg',
@@ -208,22 +191,17 @@
         obj2: document.getElementById('obj2'),
         cardSystem: document.getElementById('card-system'),
         cardLeft: document.getElementById('card-left-display'),
-        // 🔴 更新選取器：選取新的 wrapper 和圖片
         stackWrappers: document.querySelectorAll('.card-stack-wrapper'),
         stackImages: [
             document.getElementById('stack-img-1'),
             document.getElementById('stack-img-2'),
             document.getElementById('stack-img-3')
         ],
-        // 🔴 新增：選取按鈕
         readMoreBtn: document.getElementById('fern-read-more-btn')
     };
 
-    // =========================================
-    // 預載入 (加入新按鈕圖片)
-    // =========================================
     function preloadAllAssets() {
-        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/read_more_btn.png']; // 🔴 加入按鈕圖
+        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/READ_MORE.png']; // 🔴 更新路徑
 
         for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
         for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
@@ -268,9 +246,6 @@
         setTimeout(() => { state.isLocked = false; }, 500);
     }
 
-    // =========================================
-    // 遊戲邏輯
-    // =========================================
     function setupObjectInteractions() {
         const objects = [el.obj1, el.obj2];
         objects.forEach(obj => {
@@ -298,7 +273,6 @@
     }
 
     function setupCardSystem() {
-        // 🔴 更新：監聽 wrapper 的點擊事件
         el.stackWrappers.forEach(wrapper => {
             wrapper.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -310,11 +284,12 @@
 
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
-        // 🔴 按鈕點擊事件 (防止關閉卡片，可在此加入跳轉連結)
+        
+        // 按鈕點擊事件 (可跳轉)
         el.readMoreBtn.addEventListener('click', (e) => {
              e.stopPropagation();
-             console.log('Read More Clicked!');
-             // window.open('https://your-link.com', '_blank'); // 範例連結
+             console.log('Fern Read More Clicked!');
+             window.open('https://google.com', '_blank'); 
         });
     }
 
@@ -322,16 +297,13 @@
         state.isLocked = true;
         el.cardLeft.src = `images/${objectId}_card_left.png`;
 
-        // 更新堆疊卡片圖片和順序
         el.stackImages.forEach((img, index) => {
             img.src = `images/${objectId}_card_${index + 1}.png`;
         });
-        // 重置 wrapper 順序
         el.stackWrappers.forEach((wrapper, index) => {
              wrapper.setAttribute('data-layer', index + 1);
         });
 
-        // 🔴 關鍵邏輯：判斷是否顯示按鈕
         if (objectId === 'fern') {
             el.readMoreBtn.classList.remove('hidden');
         } else {
@@ -363,7 +335,6 @@
         }
     }
 
-    // ... (其餘捲動、渲染、轉場函數保持不變) ...
     window.addEventListener('wheel', (e) => {
         if (state.isLocked) return; 
         const moveDirection = e.deltaY > 0 ? 1 : -1;
