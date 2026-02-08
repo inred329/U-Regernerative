@@ -61,6 +61,7 @@
         }
         .card-stack-img { width: 100%; height: 100%; object-fit: fill; background-color: transparent; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5)); transition: filter 0.5s; }
 
+        /* Read More 按鈕樣式 (依您的修正) */
         .read-more-btn {
             position: absolute; bottom: 40px; left: 50px; width: 150px; height: auto; cursor: pointer; z-index: 10; transition: transform 0.2s ease, opacity 0.3s ease;
         }
@@ -80,22 +81,17 @@
         }
 
         /* =========================================
-           🔴 新增：Read More 燈箱 (Modal) 樣式
+           Read More 燈箱 (Modal) 樣式
            ========================================= */
         #read-more-modal {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            z-index: 3000; /* 比卡片系統(2000)還高 */
-            
-            /* 背景：80% 透明黑 */
+            z-index: 3000;
             background-color: rgba(0, 0, 0, 0.8);
-            
-            /* 預設：使用 Flex 讓圖片置中 */
             display: flex;
             justify-content: center;
             align-items: center;
-            
             opacity: 0; pointer-events: none;
             transition: opacity 0.3s ease;
         }
@@ -104,29 +100,25 @@
             opacity: 1; pointer-events: auto;
         }
 
-        /* 圖片容器與樣式 */
         #read-more-content {
-            /* 初始狀態：高度 100vh，寬度自動 (保持比例)，置中 */
             height: 100vh;
             width: auto;
             object-fit: contain;
-            cursor: zoom-in; /* 提示可以放大 */
+            cursor: zoom-in;
             transition: width 0.3s ease, height 0.3s ease;
         }
 
-        /* === 放大狀態 (Zoomed) === */
-        /* 當 modal 有 zoomed class 時，改變佈局以允許捲動 */
+        /* 放大狀態 (Zoomed) */
         #read-more-modal.zoomed {
-            display: block; /* 改為 block 才能讓 overflow 生效 */
-            overflow-y: auto; /* 允許垂直捲動 */
-            text-align: center; /* 讓圖片在水平方向置中 */
+            display: block; 
+            overflow-y: auto; 
+            text-align: center; 
         }
 
-        /* 放大後的圖片樣式 */
         #read-more-modal.zoomed #read-more-content {
-            width: 100vw; /* 寬度撐滿視界 */
-            height: auto; /* 高度自動依比例 */
-            cursor: zoom-out; /* 提示可以縮小 */
+            width: 100vw; 
+            height: auto; 
+            cursor: zoom-out; 
         }
     </style>
 </head>
@@ -169,7 +161,6 @@
     <div id="read-more-modal">
         <img id="read-more-content" src="images/text_short.png" alt="Full Content">
     </div>
-
 </div>
 
 <script>
@@ -220,13 +211,13 @@
             document.getElementById('stack-img-3')
         ],
         readMoreBtn: document.getElementById('fern-read-more-btn'),
-        // 🔴 新增：燈箱元素
         modal: document.getElementById('read-more-modal'),
         modalImg: document.getElementById('read-more-content')
     };
 
     function preloadAllAssets() {
-        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/READ_MORE.png', 'images/text_short.png']; // 🔴 加入 text_short.png
+        // 預載清單加入 text_short.png
+        let imagesToLoad = ['images/wave.png', CONFIG.land.bg, CONFIG.water.bg, 'images/READ_MORE.png', 'images/text_short.png'];
 
         for(let i=1; i<=CONFIG.land.frames; i++) imagesToLoad.push(`${CONFIG.land.pathPrefix}${i}${CONFIG.land.ext}`);
         for(let i=1; i<=CONFIG.water.frames; i++) imagesToLoad.push(`${CONFIG.water.pathPrefix}${i}${CONFIG.water.ext}`);
@@ -267,7 +258,7 @@
         updateSceneAssets();
         setupObjectInteractions();
         setupCardSystem();
-        setupReadMoreModal(); // 🔴 初始化燈箱事件
+        setupReadMoreModal();
         render();
         setTimeout(() => { state.isLocked = false; }, 500);
     }
@@ -298,18 +289,14 @@
         });
     }
 
-    // 🔴 燈箱邏輯
+    // 燈箱邏輯
     function setupReadMoreModal() {
-        // 點擊圖片：切換 縮放模式
         el.modalImg.addEventListener('click', (e) => {
-            e.stopPropagation(); // 避免觸發 modal 的關閉事件
+            e.stopPropagation();
             el.modal.classList.toggle('zoomed');
         });
-
-        // 點擊背景：關閉燈箱
         el.modal.addEventListener('click', () => {
             el.modal.classList.remove('show');
-            // 關閉時重置回縮小狀態，並捲動回頂部
             setTimeout(() => {
                 el.modal.classList.remove('zoomed');
                 el.modal.scrollTop = 0; 
@@ -330,7 +317,7 @@
         el.cardLeft.addEventListener('click', (e) => { e.stopPropagation(); });
         el.cardSystem.addEventListener('click', () => { closeCards(); });
         
-        // 🔴 按鈕點擊：打開燈箱
+        // 按鈕點擊事件：開啟燈箱
         el.readMoreBtn.addEventListener('click', (e) => {
              e.stopPropagation();
              el.modal.classList.add('show');
